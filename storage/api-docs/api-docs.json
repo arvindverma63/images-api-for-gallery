@@ -1,0 +1,393 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "My API",
+        "description": "This is the API documentation for my Laravel app using Swagger OpenAPI.",
+        "contact": {
+            "name": "API Support",
+            "email": "support@example.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/uploadImageApi": {
+            "post": {
+                "tags": [
+                    "Image"
+                ],
+                "summary": "Upload an image (already hosted on ImgBB or base64 string)",
+                "operationId": "fd869adb9c5a6723870c79b75d7e85ee",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "Image URL or base64 string",
+                                        "type": "string",
+                                        "example": "https://i.ibb.co/example.jpg"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Sample Title",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Sample Description",
+                                        "nullable": true
+                                    },
+                                    "category": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Image uploaded and saved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "Image uploaded and saved"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "example": "https://i.ibb.co/example.jpg"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "The image field is required."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "An error occurred while uploading the image"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/getImages": {
+            "get": {
+                "tags": [
+                    "Image"
+                ],
+                "summary": "Get paginated list of images with optional search",
+                "description": "Returns a random paginated list of images with optional search by ID, title, or description.",
+                "operationId": "2e444af304852b9e8968ed90bc5d1111",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by ID, title, or description",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (default: 1)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of images per page (default: 20)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "images": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Image"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "limit": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "has_more": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "An error occurred while fetching images"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/images": {
+            "get": {
+                "tags": [
+                    "Image"
+                ],
+                "summary": "Get paginated list of images with optional search and extension filter",
+                "description": "Returns a paginated list of images with optional search by title and filter by file extension (jpg, png, etc.).",
+                "operationId": "2e42057cd43ea4ab8561ac9a4b868bad",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by title",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filter by image extension (e.g., jpg, jpeg, png, gif)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "jpg",
+                                "jpeg",
+                                "png",
+                                "gif"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (default: 1)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of images per page (default: 50)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "image": {
+                                                        "type": "string",
+                                                        "example": "https://i.ibb.co/example.jpg"
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Sample Image",
+                                                        "nullable": true
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Sample Description",
+                                                        "nullable": true
+                                                    },
+                                                    "uploaded_by": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "category": {
+                                                        "type": "integer",
+                                                        "example": 1,
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-06-30T17:56:00Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-06-30T17:56:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 50
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "from": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "to": {
+                                            "type": "integer",
+                                            "example": 50
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "An error occurred while fetching images"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Image": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://i.ibb.co/example.jpg"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Sample Image",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Image",
+            "description": "Image"
+        }
+    ]
+}
