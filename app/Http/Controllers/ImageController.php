@@ -265,7 +265,8 @@ class ImageController extends Controller
 
         // Search by title
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where('title', 'like', '%' . $request->search . '%')
+            ->where('image','like','%'.$request->search.'%');
         }
 
         // Filter by image file extension
