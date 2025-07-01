@@ -27,7 +27,6 @@ class ImageService
                     Log::error('ImgBB API response missing URL', ['response' => $response->json()]);
                     return ['success' => false, 'error' => 'Failed to retrieve image URL'];
                 }
-
                 $image = Image::create([
                     'image' => $imageUrl,
                     'title' => $title,
