@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Image;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -73,38 +74,56 @@ class ImageController extends Controller
      *     )
      * )
      */
-    public function uploadImageApi(Request $request)
+    public function uploadImageApi(Request $request, ImageService $imageService)
     {
+        // Validate the request
         $request->validate([
-            'image' => 'required|string',
-            'title' => 'nullable|string',
-            'description' => 'nullable|string',
-            'category' => 'integer'
+            'images.*' => 'required|file|mimes:jpg,jpeg,png,gif', // Support multiple images, max 2MB each
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'category' => 'required|integer|min:1',
         ]);
 
         try {
-            $imageUrl = $request->image;
+            $images = $request->file('images');
+            if (empty($images)) {
+                return response()->json(['error' => 'No images provided'], 422);
+            }
 
-            $image = Image::create([
-                'image' => $imageUrl,
-                'title' => $request->input('title', 'Untitled'),
-                'description' => $request->input('description', ''),
-                'uploaded_by' => Auth::user()->id ?? 1,
-                'category' => $request->input('category'),
+            $uploadedImages = [];
+            foreach ($images as $image) {
+                $result = $imageService->uploadImage(
+                    $image,
+                    $request->input('title', 'Untitled'),
+                    $request->input('description', ''),
+                    $request->input('category')
+                );
+
+                if (!$result['success']) {
+                    Log::error('Image upload failed for one file', ['error' => $result['error']]);
+                    return response()->json(['error' => $result['error']], 500);
+                }
+
+                $uploadedImages[] = [
+                    'url' => $result['url'],
+                    'image_id' => $result['image_id'],
+                ];
+            }
+
+            Log::info('Images uploaded successfully', [
+                'count' => count($uploadedImages),
+                'urls' => array_column($uploadedImages, 'url'),
             ]);
 
-            Log::info('Image uploaded to ImgBB and saved', [
-                'url' => $imageUrl,
-                'image_id' => $image->id
-            ]);
-
-            return response()->json(['success' => 'Image uploaded and saved', 'url' => $imageUrl], 200);
+            return response()->json([
+                'success' => 'Images uploaded successfully',
+                'images' => $uploadedImages,
+            ], 200);
         } catch (\Exception $e) {
-            Log::error('Image upload to ImgBB failed', ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'An error occurred while uploading the image'], 500);
+            Log::error('Image upload process failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'An error occurred while processing the images'], 500);
         }
     }
-
     /**
      * @OA\Get(
      *     path="/api/getImages",
@@ -266,7 +285,7 @@ class ImageController extends Controller
         // Search by title
         if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%')
-            ->orWhere('image','like','%'.$request->search.'%');
+                ->orWhere('image', 'like', '%' . $request->search . '%');
         }
 
         // Filter by image file extension
