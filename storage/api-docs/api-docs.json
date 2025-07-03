@@ -32,7 +32,7 @@
                                 ],
                                 "properties": {
                                     "images[]": {
-                                        "description": "Array of image files (jpg, jpeg, png, gif)",
+                                        "description": "Array of image files (jpg, jpeg, png, gif, max 2MB each)",
                                         "type": "array",
                                         "items": {
                                             "type": "string",
@@ -130,97 +130,6 @@
                 }
             }
         },
-        "/api/getImages": {
-            "get": {
-                "tags": [
-                    "Image"
-                ],
-                "summary": "Get paginated list of images with optional search",
-                "description": "Returns a random paginated list of images with optional search by ID, title, or description.",
-                "operationId": "2e444af304852b9e8968ed90bc5d1111",
-                "parameters": [
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "description": "Search by ID, title, or description",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "description": "Page number (default: 1)",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "description": "Number of images per page (default: 20)",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "images": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Image"
-                                            }
-                                        },
-                                        "total": {
-                                            "type": "integer",
-                                            "example": 100
-                                        },
-                                        "page": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "limit": {
-                                            "type": "integer",
-                                            "example": 20
-                                        },
-                                        "has_more": {
-                                            "type": "boolean",
-                                            "example": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "An error occurred while fetching images"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/images": {
             "get": {
                 "tags": [
@@ -283,46 +192,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "image": {
-                                                        "type": "string",
-                                                        "example": "https://i.ibb.co/example.jpg"
-                                                    },
-                                                    "title": {
-                                                        "type": "string",
-                                                        "example": "Sample Image",
-                                                        "nullable": true
-                                                    },
-                                                    "description": {
-                                                        "type": "string",
-                                                        "example": "Sample Description",
-                                                        "nullable": true
-                                                    },
-                                                    "uploaded_by": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "category": {
-                                                        "type": "integer",
-                                                        "example": 1,
-                                                        "nullable": true
-                                                    },
-                                                    "created_at": {
-                                                        "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2025-06-30T17:56:00Z"
-                                                    },
-                                                    "updated_at": {
-                                                        "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2025-06-30T17:56:00Z"
-                                                    }
-                                                },
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/Image"
                                             }
                                         },
                                         "current_page": {
@@ -383,14 +253,38 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "url": {
+                    "image": {
                         "type": "string",
                         "example": "https://i.ibb.co/example.jpg"
                     },
-                    "name": {
+                    "title": {
                         "type": "string",
                         "example": "Sample Image",
                         "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Sample Description",
+                        "nullable": true
+                    },
+                    "uploaded_by": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-30T17:56:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-06-30T17:56:00Z"
                     }
                 },
                 "type": "object"

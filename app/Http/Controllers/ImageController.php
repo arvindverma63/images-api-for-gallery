@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Image;
-use App\services\ImageService;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -27,8 +27,13 @@ use Illuminate\Support\Facades\Log;
  *         schema="Image",
  *         type="object",
  *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="url", type="string", example="https://i.ibb.co/example.jpg"),
- *         @OA\Property(property="name", type="string", example="Sample Image", nullable=true)
+ *         @OA\Property(property="image", type="string", example="https://i.ibb.co/example.jpg"),
+ *         @OA\Property(property="title", type="string", example="Sample Image", nullable=true),
+ *         @OA\Property(property="description", type="string", example="Sample Description", nullable=true),
+ *         @OA\Property(property="uploaded_by", type="integer", example=1),
+ *         @OA\Property(property="category", type="integer", example=1, nullable=true),
+ *         @OA\Property(property="created_at", type="string", format="date-time", example="2025-06-30T17:56:00Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2025-06-30T17:56:00Z")
  *     )
  * )
  */
@@ -49,7 +54,7 @@ class ImageController extends Controller
      *                     property="images[]",
      *                     type="array",
      *                     @OA\Items(type="string", format="binary"),
-     *                     description="Array of image files (jpg, jpeg, png, gif)"
+     *                     description="Array of image files (jpg, jpeg, png, gif, max 2MB each)"
      *                 ),
      *                 @OA\Property(property="title", type="string", example="Sample Title", nullable=true, maxLength=255),
      *                 @OA\Property(property="description", type="string", example="Sample Description", nullable=true, maxLength=1000),
@@ -92,7 +97,7 @@ class ImageController extends Controller
     {
         // Validate the request
         $request->validate([
-            'images.*' => 'required|file|mimes:jpg,jpeg,png,gif', // Support multiple images, max 2MB each
+            'images.*' => 'required|file|mimes:jpg,jpeg,png,gif|max:2048', // Support multiple images, max 2MB each
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
             'category' => 'required|integer|min:1',
@@ -138,93 +143,6 @@ class ImageController extends Controller
             return response()->json(['error' => 'An error occurred while processing the images'], 500);
         }
     }
-    /**
-     * @OA\Get(
-     *     path="/api/getImages",
-     *     summary="Get paginated list of images with optional search",
-     *     tags={"Image"},
-     *     description="Returns a random paginated list of images with optional search by ID, title, or description.",
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Search by ID, title, or description",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="page",
-     *         in="query",
-     *         description="Page number (default: 1)",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="limit",
-     *         in="query",
-     *         description="Number of images per page (default: 20)",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful response",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="images", type="array", @OA\Items(ref="#/components/schemas/Image")),
-     *             @OA\Property(property="total", type="integer", example=100),
-     *             @OA\Property(property="page", type="integer", example=1),
-     *             @OA\Property(property="limit", type="integer", example=20),
-     *             @OA\Property(property="has_more", type="boolean", example=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Server error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="An error occurred while fetching images")
-     *         )
-     *     )
-     * )
-     */
-    public function getImages(Request $request)
-    {
-        $query = Image::query();
-
-        // Search filter
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
-                    ->orWhere('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        // Apply random ordering
-        $query->inRandomOrder();
-
-        // Pagination
-        $page = $request->input('page', 1);
-        $limit = $request->input('limit', 20); // Default to 20 images per page
-        $offset = ($page - 1) * $limit;
-
-        $total = $query->count();
-        $images = $query->skip($offset)->take($limit)->get()->map(function ($image) {
-            return [
-                'id' => $image->id,
-                'url' => $image->image,
-                'name' => $image->title ?? '',
-            ];
-        });
-
-        return response()->json([
-            'images' => $images,
-            'total' => $total,
-            'page' => $page,
-            'limit' => $limit,
-            'has_more' => ($offset + $images->count()) < $total,
-        ]);
-    }
 
     /**
      * @OA\Get(
@@ -265,16 +183,7 @@ class ImageController extends Controller
      *         description="Successful response",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="data", type="array", @OA\Items(
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="image", type="string", example="https://i.ibb.co/example.jpg"),
-     *                 @OA\Property(property="title", type="string", example="Sample Image", nullable=true),
-     *                 @OA\Property(property="description", type="string", example="Sample Description", nullable=true),
-     *                 @OA\Property(property="uploaded_by", type="integer", example=1),
-     *                 @OA\Property(property="category", type="integer", example=1, nullable=true),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-06-30T17:56:00Z"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2025-06-30T17:56:00Z")
-     *             )),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Image")),
      *             @OA\Property(property="current_page", type="integer", example=1),
      *             @OA\Property(property="per_page", type="integer", example=50),
      *             @OA\Property(property="total", type="integer", example=100),
