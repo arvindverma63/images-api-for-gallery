@@ -113,55 +113,50 @@ class ImageController extends Controller
 
     public function uploadImageApi(Request $request, ImageService $imageService)
     {
-        // Validate the request
         $request->validate([
-            'images.*' => 'required|file|mimes:jpg,jpeg,png,gif|max:2048', // Support multiple images, max 2MB each
+            'images' => 'required|file|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
             'category' => 'required|integer|min:1',
         ]);
-        Log::info('request ',['request'=>$request->all()]);
+
+        Log::info('Upload API called', ['input' => $request->all()]);
 
         try {
-            $images = $request->file('images');
-            if (empty($images)) {
-                return response()->json(['error' => 'No images provided'], 422);
+            $file = $request->file('images');
+
+            if (!$file) {
+                Log::error('No file found in request');
+                return response()->json(['error' => 'No image provided'], 422);
             }
 
-            $uploadedImages = [];
-            foreach ($images as $image) {
-                $result = $imageService->uploadImage(
-                    $image,
-                    $request->input('title', 'Untitled'),
-                    $request->input('description', ''),
-                    $request->input('category')
-                );
+            $result = $imageService->uploadImage(
+                $file,
+                $request->input('title', 'Untitled'),
+                $request->input('description', ''),
+                $request->input('category')
+            );
 
-                if (!$result['success']) {
-                    Log::error('Image upload failed for one file', ['error' => $result['error']]);
-                    return response()->json(['error' => $result['error']], 500);
-                }
-
-                $uploadedImages[] = [
-                    'url' => $result['url'],
-                    'image_id' => $result['image_id'],
-                ];
+            if (!$result['success']) {
+                Log::error('Upload failed', ['error' => $result['error']]);
+                return response()->json(['error' => $result['error']], 500);
             }
-
-            Log::info('Images uploaded successfully', [
-                'count' => count($uploadedImages),
-                'urls' => array_column($uploadedImages, 'url'),
-            ]);
 
             return response()->json([
-                'success' => 'Images uploaded successfully',
-                'images' => $uploadedImages,
+                'success' => 'Image uploaded successfully',
+                'images' => [
+                    [
+                        'url' => $result['url'],
+                        'image_id' => $result['image_id'],
+                    ]
+                ]
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Image upload process failed', ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'An error occurred while processing the images'], 500);
+            Log::error('Unhandled exception', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Unexpected error occurred'], 500);
         }
     }
+
 
     /**
      * @OA\Get(
