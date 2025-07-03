@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ImageService
 {
-    public function uploadImage(UploadedFile $file, string $title = 'Untitled', string $description = '', int $category = 1)
+    public function uploadImage(UploadedFile $file, string $title, string $description, int $category)
     {
         try {
             Log::info('Starting image upload process', [
