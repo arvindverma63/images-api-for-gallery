@@ -120,6 +120,7 @@ class ImageController extends Controller
             'description' => 'nullable|string|max:1000',
             'category' => 'required|integer|min:1',
         ]);
+        Log::info('request ',['request'=>$request->all()]);
 
         try {
             $images = $request->file('images');
