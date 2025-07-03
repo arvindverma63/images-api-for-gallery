@@ -30,7 +30,7 @@ class ImageService
             }
 
             // Get API key from environment
-            $apiKey = config('services.imgbb.key');
+            $apiKey = env('IMGBB_API_KEY');
             if (!$apiKey) {
                 Log::error('ImgBB API key not configured');
                 return ['success' => false, 'error' => 'API key not configured'];
