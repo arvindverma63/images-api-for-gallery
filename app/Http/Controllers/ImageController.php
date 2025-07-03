@@ -51,14 +51,31 @@ class ImageController extends Controller
      *             @OA\Schema(
      *                 required={"images", "category"},
      *                 @OA\Property(
-     *                     property="images[]",
-     *                     type="array",
-     *                     @OA\Items(type="string", format="binary"),
-     *                     description="Array of image files (jpg, jpeg, png, gif, max 2MB each)"
+     *                     property="images",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Single image file (jpg, jpeg, png, gif, max 2MB)"
      *                 ),
-     *                 @OA\Property(property="title", type="string", example="Sample Title", nullable=true, maxLength=255),
-     *                 @OA\Property(property="description", type="string", example="Sample Description", nullable=true, maxLength=1000),
-     *                 @OA\Property(property="category", type="integer", example=1, minimum=1)
+     *                 @OA\Property(
+     *                     property="title",
+     *                     type="string",
+     *                     example="Sample Title",
+     *                     maxLength=255,
+     *                     nullable=true
+     *                 ),
+     *                 @OA\Property(
+     *                     property="description",
+     *                     type="string",
+     *                     example="Sample Description",
+     *                     maxLength=1000,
+     *                     nullable=true
+     *                 ),
+     *                 @OA\Property(
+     *                     property="category",
+     *                     type="integer",
+     *                     example=1,
+     *                     minimum=1
+     *                 )
      *             )
      *         )
      *     ),
@@ -93,6 +110,7 @@ class ImageController extends Controller
      *     )
      * )
      */
+
     public function uploadImageApi(Request $request, ImageService $imageService)
     {
         // Validate the request

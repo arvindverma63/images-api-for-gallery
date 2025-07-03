@@ -31,13 +31,10 @@
                                     "category"
                                 ],
                                 "properties": {
-                                    "images[]": {
-                                        "description": "Array of image files (jpg, jpeg, png, gif, max 2MB each)",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "format": "binary"
-                                        }
+                                    "images": {
+                                        "description": "Single image file (jpg, jpeg, png, gif, max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
                                     },
                                     "title": {
                                         "type": "string",
