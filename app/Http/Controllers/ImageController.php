@@ -114,7 +114,7 @@ class ImageController extends Controller
     public function uploadImageApi(Request $request, ImageService $imageService)
     {
         $request->validate([
-            'images' => 'required|file|mimes:jpg,jpeg,png,gif|max:2048',
+            'images' => 'required|file|mimes:jpg,jpeg,png,gif',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
             'category' => 'required|integer|min:1',
