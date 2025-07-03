@@ -19,36 +19,42 @@
                 "tags": [
                     "Image"
                 ],
-                "summary": "Upload an image (already hosted on ImgBB or base64 string)",
+                "summary": "Upload one or more images",
                 "operationId": "fd869adb9c5a6723870c79b75d7e85ee",
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "image"
+                                    "images",
+                                    "category"
                                 ],
                                 "properties": {
-                                    "image": {
-                                        "description": "Image URL or base64 string",
-                                        "type": "string",
-                                        "example": "https://i.ibb.co/example.jpg"
+                                    "images[]": {
+                                        "description": "Array of image files (jpg, jpeg, png, gif)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
                                     },
                                     "title": {
                                         "type": "string",
+                                        "maxLength": 255,
                                         "example": "Sample Title",
                                         "nullable": true
                                     },
                                     "description": {
                                         "type": "string",
+                                        "maxLength": 1000,
                                         "example": "Sample Description",
                                         "nullable": true
                                     },
                                     "category": {
                                         "type": "integer",
-                                        "example": 1,
-                                        "nullable": true
+                                        "minimum": 1,
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
@@ -58,18 +64,30 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Image uploaded and saved successfully",
+                        "description": "Images uploaded successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
                                             "type": "string",
-                                            "example": "Image uploaded and saved"
+                                            "example": "Images uploaded successfully"
                                         },
-                                        "url": {
-                                            "type": "string",
-                                            "example": "https://i.ibb.co/example.jpg"
+                                        "images": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "url": {
+                                                        "type": "string",
+                                                        "example": "https://i.ibb.co/example.jpg"
+                                                    },
+                                                    "image_id": {
+                                                        "type": "string",
+                                                        "example": "123"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -85,7 +103,7 @@
                                     "properties": {
                                         "error": {
                                             "type": "string",
-                                            "example": "The image field is required."
+                                            "example": "The images field is required or invalid file type"
                                         }
                                     },
                                     "type": "object"
@@ -101,7 +119,7 @@
                                     "properties": {
                                         "error": {
                                             "type": "string",
-                                            "example": "An error occurred while uploading the image"
+                                            "example": "An error occurred while processing the images"
                                         }
                                     },
                                     "type": "object"
@@ -109,12 +127,7 @@
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
+                }
             }
         },
         "/api/getImages": {

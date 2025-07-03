@@ -37,39 +37,53 @@ class ImageController extends Controller
     /**
      * @OA\Post(
      *     path="/api/uploadImageApi",
-     *     summary="Upload an image (already hosted on ImgBB or base64 string)",
+     *     summary="Upload one or more images",
      *     tags={"Image"},
-     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             required={"image"},
-     *             @OA\Property(property="image", type="string", example="https://i.ibb.co/example.jpg", description="Image URL or base64 string"),
-     *             @OA\Property(property="title", type="string", example="Sample Title", nullable=true),
-     *             @OA\Property(property="description", type="string", example="Sample Description", nullable=true),
-     *             @OA\Property(property="category", type="integer", example=1, nullable=true)
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"images", "category"},
+     *                 @OA\Property(
+     *                     property="images[]",
+     *                     type="array",
+     *                     @OA\Items(type="string", format="binary"),
+     *                     description="Array of image files (jpg, jpeg, png, gif)"
+     *                 ),
+     *                 @OA\Property(property="title", type="string", example="Sample Title", nullable=true, maxLength=255),
+     *                 @OA\Property(property="description", type="string", example="Sample Description", nullable=true, maxLength=1000),
+     *                 @OA\Property(property="category", type="integer", example=1, minimum=1)
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Image uploaded and saved successfully",
+     *         description="Images uploaded successfully",
      *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="string", example="Image uploaded and saved"),
-     *             @OA\Property(property="url", type="string", example="https://i.ibb.co/example.jpg")
+     *             @OA\Property(property="success", type="string", example="Images uploaded successfully"),
+     *             @OA\Property(
+     *                 property="images",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="url", type="string", example="https://i.ibb.co/example.jpg"),
+     *                     @OA\Property(property="image_id", type="string", example="123")
+     *                 )
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
      *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="The image field is required.")
+     *             @OA\Property(property="error", type="string", example="The images field is required or invalid file type")
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
      *         description="Server error",
      *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="An error occurred while uploading the image")
+     *             @OA\Property(property="error", type="string", example="An error occurred while processing the images")
      *         )
      *     )
      * )
