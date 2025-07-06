@@ -231,7 +231,7 @@ class ImageController extends Controller
             $query->where('image', 'like', '%.' . $type);
         }
 
-        $images = $query->paginate(50);
+        $images = $query->orderBy("desc")->paginate(50);
 
         return response()->json($images);
     }
