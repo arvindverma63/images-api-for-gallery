@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Gallery</title>
-    @vite(['resources/css/app.css']) <!-- Include Tailwind CSS if using Vite -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Include Tailwind CSS if using Vite -->
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <style>
@@ -13,15 +15,18 @@
             width: 100%;
             object-fit: cover;
         }
+
         .fullscreen-img {
             max-height: 80vh;
             object-fit: contain;
         }
+
         .dialog-content {
             background: black;
             padding: 0;
             position: relative;
         }
+
         .nav-button {
             color: white;
             font-size: 2rem;
@@ -31,12 +36,14 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-50">
     <div class="container mx-auto p-4">
         <h1 class="text-3xl font-bold text-gray-800 mb-6">Image Gallery</h1>
         <div class="mb-6 flex flex-wrap gap-4">
             <div class="flex items-center">
-                <input type="text" value="{{ old('search', $search ?? '') }}" id="searchInput" class="border p-2 rounded mr-2" placeholder="Search by title" />
+                <input type="text" value="{{ old('search', $search ?? '') }}" id="searchInput"
+                    class="border p-2 rounded mr-2" placeholder="Search by title" />
                 <button id="searchButton" class="bg-blue-500 text-white p-2 rounded">Search</button>
             </div>
             <select id="typeSelect" class="border p-2 rounded mr-2">
@@ -46,15 +53,21 @@
                 <option value="png" {{ old('type', $type ?? '') === 'png' ? 'selected' : '' }}>png</option>
                 <option value="gif" {{ old('type', $type ?? '') === 'gif' ? 'selected' : '' }}>gif</option>
             </select>
-            <input type="number" value="{{ old('perPage', $perPage ?? 50) }}" id="perPageInput" class="border p-2 rounded" placeholder="Per Page" />
+            <input type="number" value="{{ old('perPage', $perPage ?? 50) }}" id="perPageInput"
+                class="border p-2 rounded" placeholder="Per Page" />
         </div>
 
         @if ($loading)
-            <div class="text-center"><div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-t-transparent"></div></div>
+            <div class="text-center">
+                <div
+                    class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-t-transparent">
+                </div>
+            </div>
         @else
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 @foreach ($images as $index => $image)
-                    <div class="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer" onclick="openFullscreen({{ $index }})" data-index="{{ $index }}">
+                    <div class="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
+                        onclick="openFullscreen({{ $index }})" data-index="{{ $index }}">
                         @if ($image['image'])
                             <img src="{{ $image['image'] }}" alt="{{ $image['title'] }}" class="card-img">
                         @endif
@@ -79,7 +92,8 @@
         <div id="fullscreenDialog" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50" onclick="closeFullscreen()">
             <div class="relative h-full flex items-center justify-center" onclick="event.stopPropagation()">
                 <button class="nav-button left-10" onclick="prevImage(event)">&larr;</button>
-                <img id="fullscreenImage" src="" alt="" class="fullscreen-img" onclick="event.stopPropagation()">
+                <img id="fullscreenImage" src="" alt="" class="fullscreen-img"
+                    onclick="event.stopPropagation()">
                 <button class="nav-button right-10" onclick="nextImage(event)">&rarr;</button>
             </div>
         </div>
@@ -115,11 +129,13 @@
 
         document.getElementById('viewMoreButton').addEventListener('click', () => {
             page++;
-            fetchGallery(document.getElementById('searchInput').value, document.getElementById('typeSelect').value, page, document.getElementById('perPageInput').value);
+            fetchGallery(document.getElementById('searchInput').value, document.getElementById('typeSelect').value,
+                page, document.getElementById('perPageInput').value);
         });
 
         function fetchGallery(search, type, page, perPage) {
-            fetch(`https://images.afterdarkhub.com/api/images?search=${search}&type=${type}&page=${page}&per_page=${perPage}`)
+            fetch(
+                    `https://images.afterdarkhub.com/api/images?search=${search}&type=${type}&page=${page}&per_page=${perPage}`)
                 .then(response => response.json())
                 .then(data => {
                     images = data.data.filter(img => img && img.image);
@@ -134,7 +150,8 @@
             gallery.innerHTML = '';
             images.forEach((image, index) => {
                 const div = document.createElement('div');
-                div.className = 'border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer';
+                div.className =
+                    'border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer';
                 div.setAttribute('onclick', `openFullscreen(${index})`);
                 div.setAttribute('data-index', index);
                 div.innerHTML = `
@@ -206,4 +223,5 @@
         });
     </script>
 </body>
+
 </html>
