@@ -18,10 +18,22 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/login', [AuthController::class, 'login']);
-Route::post('/login', [AuthController::class, 'doLogin']);
-Route::get('/check-password', function () {
-    // This route is just to trigger the middleware
+// Show login form
+Route::get('/login', [AuthController::class, 'login'])->name('login');
 
-    Route::get('/gallery', [AuthController::class, 'gallery']);
+// Handle login form submission
+Route::post('/login', [AuthController::class, 'doLogin'])->name('do.login');
+
+// Show gallery page (only for authenticated session)
+Route::get('/gallery', [AuthController::class, 'gallery'])->name('gallery');
+
+// Route that checks session and redirects accordingly (uses middleware)
+Route::get('/check-password', function () {
+    // This route just triggers the session check
 })->middleware('password.check');
+
+// Optional logout route to clear session
+Route::post('/logout', function () {
+    session()->forget('password');
+    return redirect('/login');
+})->name('logout');
