@@ -48,7 +48,7 @@
             setPage(1);
           }
           try {
-            const response = await fetch(`https://images.afterdarkhub.com/api/images?search=${search}&type=${type}&page=${page}&per_page=${perPage}`);
+            const response = await fetch('https://images.afterdarkhub.com/api/images?search=${search}&type=${type}&page=${page}&per_page=${perPage}');
             const data = await response.json();
             const validImages = await Promise.all(data.data.map(async (image) => {
               if (image.image && await isImageValid(image.image)) {
