@@ -240,6 +240,78 @@
                     }
                 }
             }
+        },
+        "/api/uploadImageDF": {
+            "post": {
+                "tags": [
+                    "Image"
+                ],
+                "summary": "Upload an image (already hosted on ImgBB or base64 string)",
+                "operationId": "43d4809de6be69aebc005815153d4b26",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "Image URL or base64 string",
+                                        "type": "string",
+                                        "example": "https://i.ibb.co/example.jpg"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Sample Title",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Sample Description",
+                                        "nullable": true
+                                    },
+                                    "category": {
+                                        "type": "integer",
+                                        "example": "1",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Image uploaded and saved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "Image uploaded and saved"
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "example": "https://i.ibb.co/example.jpg"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
         }
     },
     "components": {

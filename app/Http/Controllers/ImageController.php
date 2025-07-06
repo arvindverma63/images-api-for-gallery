@@ -235,4 +235,70 @@ class ImageController extends Controller
 
         return response()->json($images);
     }
+
+
+     /**
+     * @OA\Post(
+     *     path="/api/uploadImageDF",
+     *     summary="Upload an image (already hosted on ImgBB or base64 string)",
+     *     tags={"Image"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"image"},
+     *             @OA\Property(property="image", type="string", example="https://i.ibb.co/example.jpg", description="Image URL or base64 string"),
+     *             @OA\Property(property="title", type="string", example="Sample Title", nullable=true),
+     *             @OA\Property(property="description", type="string", example="Sample Description", nullable=true),
+     *             @OA\Property(property="category", type="integer", example="1", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Image uploaded and saved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="string", example="Image uploaded and saved"),
+     *             @OA\Property(property="url", type="string", example="https://i.ibb.co/example.jpg")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error"
+     *     )
+     * )
+     */
+    public function uploadImageDF(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|string',
+            'title' => 'nullable|string',
+            'description' => 'nullable|string',
+            'category' => 'integer'
+        ]);
+
+        try {
+            $imageUrl = $request->image;
+
+            $image = Image::create([
+                'image' => $imageUrl,
+                'title' => $request->input('title', 'Untitled'),
+                'description' => $request->input('description', ''),
+                'uploaded_by' => Auth::user()->id ?? 1,
+                'category' => $request->input('category'),
+            ]);
+
+            Log::info('Image uploaded to ImgBB and saved', [
+                'url' => $imageUrl,
+                'image_id' => $image->id
+            ]);
+
+            return response()->json(['success' => 'Image uploaded and saved', 'url' => $imageUrl], 200);
+        } catch (\Exception $e) {
+            Log::error('Image upload to ImgBB failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'An error occurred while uploading the image'], 500);
+        }
+    }
 }
