@@ -1,232 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Gallery</title>
-  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery</title>
+    @vite(['resources/css/app.css']) <!-- Include Tailwind CSS if using Vite -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <style>
+        .card-img {
+            height: 200px;
+            width: 100%;
+            object-fit: cover;
+        }
+        .fullscreen-img {
+            max-height: 80vh;
+            object-fit: contain;
+        }
+        .dialog-content {
+            background: black;
+            padding: 0;
+            position: relative;
+        }
+        .nav-button {
+            color: white;
+            font-size: 2rem;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
-  <div id="root"></div>
-
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-    const { Button, TextField, Select, MenuItem, FormControl, InputLabel, Card, CardMedia, CardContent, Typography, CircularProgress, Dialog, DialogContent, IconButton, Box } = MaterialUI;
-
-    const Gallery = () => {
-      const [images, setImages] = useState([]);
-      const [page, setPage] = useState(1);
-      const [perPage, setPerPage] = useState(50);
-      const [search, setSearch] = useState('');
-      const [type, setType] = useState('');
-      const [total, setTotal] = useState(0);
-      const [loading, setLoading] = useState(false);
-      const [selectedImageIndex, setSelectedImageIndex] = useState(null);
-      const [touchStart, setTouchStart] = useState(null);
-      const [touchEnd, setTouchEnd] = useState(null);
-
-      const isImageValid = async (url) => {
-        try {
-          const response = await fetch(url, { method: 'HEAD', mode: 'cors' });
-          return response.ok;
-        } catch {
-          return false;
-        }
-      };
-
-      useEffect(() => {
-        const fetchImages = async () => {
-          setLoading(true);
-          // Reset images and page when search or type changes
-          if (search !== '' || type !== '') {
-            setImages([]);
-            setPage(1);
-          }
-          try {
-            const response = await fetch('https://images.afterdarkhub.com/api/images?search=${search}&type=${type}&page=${page}&per_page=${perPage}');
-            const data = await response.json();
-            const validImages = await Promise.all(data.data.map(async (image) => {
-              if (image.image && await isImageValid(image.image)) {
-                return image;
-              }
-              return null;
-            }));
-            // Only set new images, avoiding append unless paginating
-            setImages(validImages.filter(img => img !== null));
-            setTotal(data.total || 0);
-          } catch (error) {
-            console.error('Error fetching data:', error);
-          } finally {
-            setLoading(false);
-          }
-        };
-        fetchImages();
-      }, [page, perPage]); // Removed search and type from dependency to control fetch with button
-
-      const handleSearch = () => {
-        setImages([]); // Clear previous images
-        setPage(1);   // Reset to first page
-        // Trigger fetch by updating a dependency (e.g., page) is handled by useEffect
-      };
-
-      const handleViewMore = () => {
-        setPage(prev => prev + 1);
-      };
-
-      const handleImageClick = (index) => {
-        setSelectedImageIndex(index);
-      };
-
-      const handleClose = () => {
-        setSelectedImageIndex(null);
-      };
-
-      const handleNext = () => {
-        if (selectedImageIndex < images.length - 1) {
-          setSelectedImageIndex(prev => prev + 1);
-        }
-      };
-
-      const handlePrev = () => {
-        if (selectedImageIndex > 0) {
-          setSelectedImageIndex(prev => prev - 1);
-        }
-      };
-
-      const handleTouchStart = (e) => {
-        setTouchStart(e.touches[0].clientX);
-      };
-
-      const handleTouchMove = (e) => {
-        setTouchEnd(e.touches[0].clientX);
-      };
-
-      const handleTouchEnd = () => {
-        if (!touchStart || !touchEnd) return;
-        const distance = touchStart - touchEnd;
-        const isLeftSwipe = distance > 50;
-        const isRightSwipe = distance < -50;
-        if (isLeftSwipe && selectedImageIndex < images.length - 1) handleNext();
-        if (isRightSwipe && selectedImageIndex > 0) handlePrev();
-        setTouchStart(null);
-        setTouchEnd(null);
-      };
-
-      return (
-        <div className="container mx-auto p-4">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">Image Gallery</h1>
-          <div className="mb-6 flex flex-wrap gap-4">
-            <div className="flex items-center">
-              <TextField
-                label="Search by title"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                variant="outlined"
-                size="small"
-                className="mr-2"
-              />
-              <Button variant="contained" color="primary" onClick={handleSearch} className="ml-2">
-                Search
-              </Button>
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Image Gallery</h1>
+        <div class="mb-6 flex flex-wrap gap-4">
+            <div class="flex items-center">
+                <input type="text" value="{{ old('search', $search ?? '') }}" id="searchInput" class="border p-2 rounded mr-2" placeholder="Search by title" />
+                <button id="searchButton" class="bg-blue-500 text-white p-2 rounded">Search</button>
             </div>
-            <FormControl variant="outlined" size="small" className="mr-2">
-              <InputLabel>Type</InputLabel>
-              <Select
-                value={type}
-                onChange={(e) => {
-                  setType(e.target.value);
-                  setPage(1); // Reset to first page on type change
-                }}
-                label="Type"
-              >
-                <MenuItem value="">All Types</MenuItem>
-                <MenuItem value="jpg">jpg</MenuItem>
-                <MenuItem value="jpeg">jpeg</MenuItem>
-                <MenuItem value="png">png</MenuItem>
-                <MenuItem value="gif">gif</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              label="Per Page"
-              type="number"
-              value={perPage}
-              onChange={(e) => {
-                setPerPage(e.target.value);
-                setPage(1); // Reset to first page on per page change
-              }}
-              variant="outlined"
-              size="small"
-            />
-          </div>
-          {loading ? (
-            <div className="text-center"><CircularProgress /></div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {images.map((image, index) => (
-                  <Card key={index} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300" onClick={() => handleImageClick(index)}>
-                    {image.image && (
-                      <CardMedia
-                        component="img"
-                        height="200"
-                        image={image.image}
-                        alt={image.title}
-                        className="object-cover w-full h-full"
-                      />
-                    )}
-                    <CardContent className="p-2 flex justify-between items-center bg-white">
-                      <Typography variant="caption" color="text.secondary">
-                        {image.title || `From ARVIND Verma's images`}
-                      </Typography>
-                      <div className="flex space-x-2">
-                        <span className="text-red-500 cursor-pointer">❤️</span>
-                        <span className="text-gray-500 cursor-pointer">↗</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {images.length < total && (
-                <div className="text-center mt-6">
-                  <Button variant="contained" color="primary" onClick={handleViewMore} disabled={loading}>
-                    View More
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-          <Dialog open={selectedImageIndex !== null} onClose={handleClose} maxWidth="md" fullWidth>
-            <DialogContent
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              style={{ position: 'relative', background: 'black', padding: 0 }}
-            >
-              {selectedImageIndex !== null && images[selectedImageIndex] && (
-                <>
-                  <IconButton onClick={handlePrev} style={{ color: 'white', position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: '2rem' }} disabled={selectedImageIndex === 0}>
-                    ←
-                  </IconButton>
-                  <img src={images[selectedImageIndex].image} alt={images[selectedImageIndex].title} style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '80vh', objectFit: 'contain' }} />
-                  <IconButton onClick={handleNext} style={{ color: 'white', position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: '2rem' }} disabled={selectedImageIndex === images.length - 1}>
-                    →
-                  </IconButton>
-                </>
-              )}
-            </DialogContent>
-          </Dialog>
+            <select id="typeSelect" class="border p-2 rounded mr-2">
+                <option value="" {{ old('type', $type ?? '') === '' ? 'selected' : '' }}>All Types</option>
+                <option value="jpg" {{ old('type', $type ?? '') === 'jpg' ? 'selected' : '' }}>jpg</option>
+                <option value="jpeg" {{ old('type', $type ?? '') === 'jpeg' ? 'selected' : '' }}>jpeg</option>
+                <option value="png" {{ old('type', $type ?? '') === 'png' ? 'selected' : '' }}>png</option>
+                <option value="gif" {{ old('type', $type ?? '') === 'gif' ? 'selected' : '' }}>gif</option>
+            </select>
+            <input type="number" value="{{ old('perPage', $perPage ?? 50) }}" id="perPageInput" class="border p-2 rounded" placeholder="Per Page" />
         </div>
-      );
-    };
 
-    ReactDOM.render(<Gallery />, document.getElementById('root'));
-  </script>
+        @if ($loading)
+            <div class="text-center"><div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-t-transparent"></div></div>
+        @else
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                @foreach ($images as $index => $image)
+                    <div class="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer" onclick="openFullscreen({{ $index }})" data-index="{{ $index }}">
+                        @if ($image['image'])
+                            <img src="{{ $image['image'] }}" alt="{{ $image['title'] }}" class="card-img">
+                        @endif
+                        <div class="p-2 flex justify-between items-center bg-white">
+                            <p class="text-sm text-gray-600">{{ $image['title'] ?? 'From ARVIND Verma\'s images' }}</p>
+                            <div class="flex space-x-2">
+                                <span class="text-red-500 cursor-pointer">❤️</span>
+                                <span class="text-gray-500 cursor-pointer">↗</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            @if (count($images) < $total)
+                <div class="text-center mt-6">
+                    <button id="viewMoreButton" class="bg-blue-500 text-white p-2 rounded">View More</button>
+                </div>
+            @endif
+        @endif
 
-  <script src="https://unpkg.com/@mui/material@5.15.14/umd/material-ui.production.min.js"></script>
+        <!-- Fullscreen Dialog -->
+        <div id="fullscreenDialog" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50" onclick="closeFullscreen()">
+            <div class="relative h-full flex items-center justify-center" onclick="event.stopPropagation()">
+                <button class="nav-button left-10" onclick="prevImage(event)">&larr;</button>
+                <img id="fullscreenImage" src="" alt="" class="fullscreen-img" onclick="event.stopPropagation()">
+                <button class="nav-button right-10" onclick="nextImage(event)">&rarr;</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let images = @json($images);
+        let total = {{ $total ?? 0 }};
+        let page = {{ $page ?? 1 }};
+        let perPage = {{ $perPage ?? 50 }};
+        let selectedIndex = null;
+
+        document.getElementById('searchButton').addEventListener('click', () => {
+            const search = document.getElementById('searchInput').value;
+            const type = document.getElementById('typeSelect').value;
+            const perPage = document.getElementById('perPageInput').value;
+            fetchGallery(search, type, 1, perPage); // Reset to page 1
+        });
+
+        document.getElementById('typeSelect').addEventListener('change', () => {
+            const search = document.getElementById('searchInput').value;
+            const type = document.getElementById('typeSelect').value;
+            const perPage = document.getElementById('perPageInput').value;
+            fetchGallery(search, type, 1, perPage); // Reset to page 1
+        });
+
+        document.getElementById('perPageInput').addEventListener('change', () => {
+            const search = document.getElementById('searchInput').value;
+            const type = document.getElementById('typeSelect').value;
+            const perPage = document.getElementById('perPageInput').value;
+            fetchGallery(search, type, 1, perPage); // Reset to page 1
+        });
+
+        document.getElementById('viewMoreButton').addEventListener('click', () => {
+            page++;
+            fetchGallery(document.getElementById('searchInput').value, document.getElementById('typeSelect').value, page, document.getElementById('perPageInput').value);
+        });
+
+        function fetchGallery(search, type, page, perPage) {
+            fetch(`https://images.afterdarkhub.com/api/images?search=${search}&type=${type}&page=${page}&per_page=${perPage}`)
+                .then(response => response.json())
+                .then(data => {
+                    images = data.data.filter(img => img && img.image);
+                    total = data.total || 0;
+                    updateGallery();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        function updateGallery() {
+            const gallery = document.querySelector('.grid');
+            gallery.innerHTML = '';
+            images.forEach((image, index) => {
+                const div = document.createElement('div');
+                div.className = 'border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer';
+                div.setAttribute('onclick', `openFullscreen(${index})`);
+                div.setAttribute('data-index', index);
+                div.innerHTML = `
+                    <img src="${image.image}" alt="${image.title}" class="card-img">
+                    <div class="p-2 flex justify-between items-center bg-white">
+                        <p class="text-sm text-gray-600">${image.title || 'From ARVIND Verma\'s images'}</p>
+                        <div class="flex space-x-2">
+                            <span class="text-red-500 cursor-pointer">❤️</span>
+                            <span class="text-gray-500 cursor-pointer">↗</span>
+                        </div>
+                    </div>
+                `;
+                gallery.appendChild(div);
+            });
+            document.getElementById('viewMoreButton').style.display = images.length < total ? 'inline-block' : 'none';
+        }
+
+        function openFullscreen(index) {
+            selectedIndex = index;
+            const image = images[selectedIndex];
+            document.getElementById('fullscreenImage').src = image.image;
+            document.getElementById('fullscreenImage').alt = image.title;
+            document.getElementById('fullscreenDialog').classList.remove('hidden');
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenDialog').classList.add('hidden');
+            selectedIndex = null;
+        }
+
+        function prevImage(event) {
+            event.stopPropagation();
+            if (selectedIndex > 0) {
+                selectedIndex--;
+                openFullscreen(selectedIndex);
+            }
+        }
+
+        function nextImage(event) {
+            event.stopPropagation();
+            if (selectedIndex < images.length - 1) {
+                selectedIndex++;
+                openFullscreen(selectedIndex);
+            }
+        }
+
+        // Touch events for swipe
+        let touchStartX = null;
+        let touchEndX = null;
+
+        document.getElementById('fullscreenDialog').addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.getElementById('fullscreenDialog').addEventListener('touchmove', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+        });
+
+        document.getElementById('fullscreenDialog').addEventListener('touchend', () => {
+            if (touchStartX && touchEndX) {
+                const distance = touchStartX - touchEndX;
+                const isLeftSwipe = distance > 50;
+                const isRightSwipe = distance < -50;
+                if (isLeftSwipe && selectedIndex < images.length - 1) nextImage(event);
+                if (isRightSwipe && selectedIndex > 0) prevImage(event);
+                touchStartX = null;
+                touchEndX = null;
+            }
+        });
+    </script>
 </body>
 </html>

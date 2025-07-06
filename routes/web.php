@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GalleryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,3 +38,5 @@ Route::post('/logout', function () {
     session()->forget('password');
     return redirect('/login');
 })->name('logout');
+
+Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
