@@ -41,4 +41,4 @@ Route::post('/logout', function () {
 
 Route::get('/gallery', [GalleryController::class, 'index'])
     ->middleware('password.check')
-    ->name('gallery');
+    ->name('gallery.index');

@@ -1,255 +1,284 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Gallery</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+   <style>
+       body {
+           background: #f9fafb;
+           font-family: 'Roboto', sans-serif;
+           margin: 0;
+       }
 
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <style>
-        .card-img {
-            height: 200px;
-            width: 100%;
-            object-fit: cover;
-        }
-        .fullscreen-img {
-            max-height: 80vh;
-            object-fit: contain;
-        }
-        .dialog-content {
-            background: black;
-            padding: 0;
-            position: relative;
-        }
-        .nav-button {
-            color: white;
-            font-size: 2rem;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-        }
-        .close-button {
-            color: white;
-            font-size: 2rem;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body class="bg-gray-50">
-    <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Image Gallery</h1>
-        <div class="mb-6 flex flex-wrap gap-4">
-            <div class="flex items-center">
-                <input type="text" value="{{ old('search', $search ?? '') }}" id="searchInput" class="border p-2 rounded mr-2" placeholder="Search by title" />
-                <button id="searchButton" class="bg-blue-500 text-white p-2 rounded">Search</button>
-            </div>
-            <select id="typeSelect" class="border p-2 rounded mr-2">
-                <option value="" {{ old('type', $type ?? '') === '' ? 'selected' : '' }}>All Types</option>
-                <option value="jpg" {{ old('type', $type ?? '') === 'jpg' ? 'selected' : '' }}>jpg</option>
-                <option value="jpeg" {{ old('type', $type ?? '') === 'jpeg' ? 'selected' : '' }}>jpeg</option>
-                <option value="png" {{ old('type', $type ?? '') === 'png' ? 'selected' : '' }}>png</option>
-                <option value="gif" {{ old('type', $type ?? '') === 'gif' ? 'selected' : '' }}>gif</option>
-            </select>
-            <input type="number" value="{{ old('perPage', $perPage ?? 50) }}" id="perPageInput" class="border p-2 rounded" placeholder="Per Page" />
-        </div>
+       .container {
+           max-width: 1280px;
+           margin: 0 auto;
+           padding: 1rem;
+       }
 
-        @if ($loading)
-            <div class="text-center"><div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-t-transparent"></div></div>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" id="galleryGrid">
-                @foreach ($images as $index => $image)
-                    <div class="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer" onclick="openFullscreen({{ $index }})" data-index="{{ $index }}" data-image="{{ $image['image'] }}">
-                        @if ($image['image'])
-                            <img src="{{ $image['image'] }}" alt="{{ $image['title'] }}" class="card-img">
-                        @endif
-                        <div class="p-2 flex justify-between items-center bg-white">
-                            <p class="text-sm text-gray-600">{{ $image['title'] ?? 'From ARVIND Verma\'s images' }}</p>
-                            <div class="flex space-x-2">
-                                <span class="text-red-500 cursor-pointer">❤️</span>
-                                <span class="text-gray-500 cursor-pointer">↗</span>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            @if (count($images) < $total)
-                <div class="text-center mt-6">
-                    <button id="viewMoreButton" class="bg-blue-500 text-white p-2 rounded">View More</button>
-                </div>
-            @endif
-        @endif
+       .text-3xl {
+           font-size: 1.875rem;
+           font-weight: 700;
+           color: #1f2937;
+           margin-bottom: 1.5rem;
+       }
 
-        <!-- Fullscreen Dialog -->
-        <div id="fullscreenDialog" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50" onclick="closeFullscreen()">
-            <div class="relative h-full flex items-center justify-center" onclick="event.stopPropagation()">
-                <button class="nav-button left-10" onclick="prevImage(event)">←</button>
-                <img id="fullscreenImage" src="" alt="" class="fullscreen-img" onclick="event.stopPropagation()">
-                <button class="nav-button right-10" onclick="nextImage(event)">→</button>
-                <span class="close-button material-icons" onclick="closeFullscreen(event)">close</span>
-            </div>
-        </div>
-    </div>
+       .flex {
+           display: flex;
+           flex-wrap: wrap;
+           gap: 1rem;
+       }
 
-    <script>
-        let images = @json($images);
-        let total = {{ $total ?? 0 }};
-        let page = {{ $page ?? 1 }};
-        let perPage = {{ $perPage ?? 50 }};
-        let selectedIndex = null;
+       .items-center {
+           align-items: center;
+       }
 
-        // Function to check if image URL is valid
-        async function isImageValid(url) {
-            try {
-                const response = await fetch(url, { method: 'HEAD', mode: 'cors' });
-                return response.ok;
-            } catch {
-                return false;
-            }
-        }
+       .border {
+           border: 1px solid #e5e7eb;
+       }
 
-        // Initial filter for broken links
-        async function filterBrokenLinks() {
-            const validImages = await Promise.all(images.map(async (image, index) => {
-                if (image && image.image && await isImageValid(image.image)) {
-                    return image;
-                }
-                return null;
-            }));
-            images = validImages.filter(img => img !== null);
-            updateGallery();
-        }
+       .p-2 {
+           padding: 0.5rem;
+       }
 
-        // Call filter on page load
-        filterBrokenLinks();
+       .rounded {
+           border-radius: 0.375rem;
+       }
 
-        document.getElementById('searchButton').addEventListener('click', () => {
-            const search = document.getElementById('searchInput').value;
-            const type = document.getElementById('typeSelect').value;
-            const perPage = document.getElementById('perPageInput').value;
-            fetchGallery(search, type, 1, perPage); // Reset to page 1
-        });
+       .mr-2 {
+           margin-right: 0.5rem;
+       }
 
-        document.getElementById('typeSelect').addEventListener('change', () => {
-            const search = document.getElementById('searchInput').value;
-            const type = document.getElementById('typeSelect').value;
-            const perPage = document.getElementById('perPageInput').value;
-            fetchGallery(search, type, 1, perPage); // Reset to page 1
-        });
+       .bg-blue-500 {
+           background: #3b82f6;
+       }
 
-        document.getElementById('perPageInput').addEventListener('change', () => {
-            const search = document.getElementById('searchInput').value;
-            const type = document.getElementById('typeSelect').value;
-            const perPage = document.getElementById('perPageInput').value;
-            fetchGallery(search, type, 1, perPage); // Reset to page 1
-        });
+       .text-white {
+           color: #fff;
+       }
 
-        document.getElementById('viewMoreButton').addEventListener('click', () => {
-            page++;
-            fetchGallery(document.getElementById('searchInput').value, document.getElementById('typeSelect').value, page, document.getElementById('perPageInput').value);
-        });
+       .grid {
+           display: grid;
+           grid-template-columns: 1fr;
+           /* Single column for mobile */
+           gap: 1rem;
+       }
 
-        function fetchGallery(search, type, page, perPage) {
-            fetch(`https://images.afterdarkhub.com/api/images?search=${search}&type=${type}&page=${page}&per_page=${perPage}`)
-                .then(response => response.json())
-                .then(async data => {
-                    images = data.data || [];
-                    total = data.total || 0;
-                    // Filter out broken links
-                    const validImages = await Promise.all(images.map(async (image, index) => {
-                        if (image && image.image && await isImageValid(image.image)) {
-                            return image;
-                        }
-                        return null;
-                    }));
-                    images = validImages.filter(img => img !== null);
-                    updateGallery();
-                })
-                .catch(error => console.error('Error fetching data:', error));
-        }
+       @media (min-width: 640px) {
+           .grid {
+               grid-template-columns: repeat(2, 1fr);
+           }
+       }
 
-        function updateGallery() {
-            const gallery = document.getElementById('galleryGrid');
-            gallery.innerHTML = '';
-            images.forEach((image, index) => {
-                const div = document.createElement('div');
-                div.className = 'border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer';
-                div.setAttribute('onclick', `openFullscreen(${index})`);
-                div.setAttribute('data-index', index);
-                div.setAttribute('data-image', image.image);
-                div.innerHTML = `
-                    <img src="${image.image}" alt="${image.title}" class="card-img">
-                    <div class="p-2 flex justify-between items-center bg-white">
-                        <p class="text-sm text-gray-600">${image.title || 'From ARVIND Verma\'s images'}</p>
-                        <div class="flex space-x-2">
-                            <span class="text-red-500 cursor-pointer">❤️</span>
-                            <span class="text-gray-500 cursor-pointer">↗</span>
-                        </div>
-                    </div>
-                `;
-                gallery.appendChild(div);
-            });
-            document.getElementById('viewMoreButton').style.display = images.length < total ? 'inline-block' : 'none';
-        }
+       @media (min-width: 768px) {
+           .grid {
+               grid-template-columns: repeat(3, 1fr);
+           }
+       }
 
-        function openFullscreen(index) {
-            selectedIndex = index;
-            const image = images[selectedIndex];
-            document.getElementById('fullscreenImage').src = image.image;
-            document.getElementById('fullscreenImage').alt = image.title;
-            document.getElementById('fullscreenDialog').classList.remove('hidden');
-        }
+       @media (min-width: 1024px) {
+           .grid {
+               grid-template-columns: repeat(5, 1fr);
+           }
+       }
 
-        function closeFullscreen(event) {
-            event.stopPropagation();
-            document.getElementById('fullscreenDialog').classList.add('hidden');
-            selectedIndex = null;
-        }
+       .card-img {
+           width: 100%;
+           height: 200px;
+           object-fit: cover;
+           display: block;
+       }
 
-        function prevImage(event) {
-            event.stopPropagation();
-            if (selectedIndex > 0) {
-                selectedIndex--;
-                openFullscreen(selectedIndex);
-            }
-        }
+       .shadow-sm {
+           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+       }
 
-        function nextImage(event) {
-            event.stopPropagation();
-            if (selectedIndex < images.length - 1) {
-                selectedIndex++;
-                openFullscreen(selectedIndex);
-            }
-        }
+       .hover\:shadow-md:hover {
+           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+       }
 
-        // Touch events for swipe
-        let touchStartX = null;
-        let touchEndX = null;
+       .transition-shadow {
+           transition: box-shadow 0.3s;
+       }
 
-        document.getElementById('fullscreenDialog').addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
+       .text-sm {
+           font-size: 0.875rem;
+           color: #4b5563;
+       }
 
-        document.getElementById('fullscreenDialog').addEventListener('touchmove', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-        });
+       .justify-between {
+           justify-content: space-between;
+       }
 
-        document.getElementById('fullscreenDialog').addEventListener('touchend', () => {
-            if (touchStartX && touchEndX) {
-                const distance = touchStartX - touchEndX;
-                const isLeftSwipe = distance > 50;
-                const isRightSwipe = distance < -50;
-                if (isLeftSwipe && selectedIndex < images.length - 1) nextImage(event);
-                if (isRightSwipe && selectedIndex > 0) prevImage(event);
-                touchStartX = null;
-                touchEndX = null;
-            }
-        });
-    </script>
-</body>
-</html>
+       .bg-white {
+           background: #fff;
+       }
+
+       .space-x-2>*+* {
+           margin-left: 0.5rem;
+       }
+
+       .text-red-500 {
+           color: #ef4444;
+       }
+
+       .text-gray-500 {
+           color: #6b7280;
+       }
+
+       .mt-6 {
+           margin-top: 1.5rem;
+       }
+
+       .text-center {
+           text-align: center;
+       }
+
+       .fullscreen-dialog {
+           position: fixed;
+           inset: 0;
+           background: rgba(0, 0, 0, 0.9);
+           z-index: 50;
+           display: none;
+       }
+
+       .fullscreen-dialog:target {
+           display: block;
+       }
+
+       .dialog-content {
+           background: #000;
+           width: 100%;
+           height: 100%;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           position: relative;
+       }
+
+       .fullscreen-img {
+           max-width: 100%;
+           max-height: calc(100vh - 4rem);
+           object-fit: contain;
+       }
+
+       .nav-button {
+           color: #fff;
+           font-size: 2rem;
+           position: absolute;
+           top: 50%;
+           transform: translateY(-50%);
+           text-decoration: none;
+           padding: 0.5rem;
+       }
+
+       .nav-button.left {
+           left: 10px;
+       }
+
+       .nav-button.right {
+           right: 10px;
+       }
+
+       .close-button {
+           color: #fff;
+           font-size: 2rem;
+           position: absolute;
+           top: 10px;
+           right: 10px;
+           text-decoration: none;
+       }
+
+       @media (max-width: 639px) {
+           .card-img {
+               height: auto;
+               max-height: 300px;
+           }
+
+           .border {
+               width: 100%;
+           }
+
+           .fullscreen-img {
+               width: 100%;
+               max-height: calc(100vh - 2rem);
+           }
+       }
+   </style>
+   </head>
+
+   <body>
+       <div class="container">
+           <h1 class="text-3xl">Image Gallery</h1>
+           <div class="flex mb-6">
+               <form action="{{ route('gallery.index') }}" method="GET" class="flex items-center mr-2">
+                   <input type="text" name="search" value="{{ old('search', $search ?? '') }}"
+                       class="border p-2 rounded" placeholder="Search by title or description">
+                   <button type="submit" class="bg-blue-500 text-white p-2 rounded">Search</button>
+               </form>
+               <form action="{{ route('gallery.index') }}" method="GET" class="flex items-center mr-2">
+                   <input type="hidden" name="search" value="{{ $search ?? '' }}">
+                   <select name="type" class="border p-2 rounded">
+                       <option value="" {{ old('type', $type ?? '') === '' ? 'selected' : '' }}>All Types</option>
+                       <option value="jpg" {{ old('type', $type ?? '') === 'jpg' ? 'selected' : '' }}>jpg</option>
+                       <option value="jpeg" {{ old('type', $type ?? '') === 'jpeg' ? 'selected' : '' }}>jpeg</option>
+                       <option value="png" {{ old('type', $type ?? '') === 'png' ? 'selected' : '' }}>png</option>
+                       <option value="gif" {{ old('type', $type ?? '') === 'gif' ? 'selected' : '' }}>gif</option>
+                   </select>
+                   <button type="submit" class="bg-blue-500 text-white p-2 rounded">Filter</button>
+               </form>
+               <form action="{{ route('gallery.index') }}" method="GET" class="flex items-center">
+                   <input type="hidden" name="search" value="{{ $search ?? '' }}">
+                   <input type="hidden" name="type" value="{{ $type ?? '' }}">
+                   <input type="number" name="per_page" value="{{ old('per_page', $perPage ?? 10) }}"
+                       class="border p-2 rounded" placeholder="Per Page" min="1" max="100">
+                   <button type="submit" class="bg-blue-500 text-white p-2 rounded">Apply</button>
+               </form>
+           </div>
+
+           <div class="grid">
+               @forelse ($images as $index => $image)
+                   <div class="border shadow-sm hover:shadow-md transition-shadow">
+                       <a href="#fullscreen-{{ $index }}">
+                           <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}" class="card-img">
+                       </a>
+                       <div class="p-2 flex justify-between items-center bg-white">
+                           <p class="text-sm">{{ $image->title ?? 'Untitled Image' }}</p>
+                           <div class="flex space-x-2">
+                               <span class="text-red-500">❤️</span>
+                               <span class="text-gray-500">↗</span>
+                           </div>
+                       </div>
+                   </div>
+                   <!-- Fullscreen Modal -->
+                   <div id="fullscreen-{{ $index }}" class="fullscreen-dialog">
+                       <div class="dialog-content">
+                           <a href="#" class="close-button material-icons">close</a>
+                           @if ($index > 0)
+                               <a href="#fullscreen-{{ $index - 1 }}"
+                                   class="nav-button left material-icons">chevron_left</a>
+                           @endif
+                           <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}"
+                               class="fullscreen-img">
+                           @if ($index < $images->count() - 1)
+                               <a href="#fullscreen-{{ $index + 1 }}"
+                                   class="nav-button right material-icons">chevron_right</a>
+                           @endif
+                       </div>
+                   </div>
+               @empty
+                   <p class="text-center text-sm">No images found.</p>
+               @endforelse
+           </div>
+
+           @if ($images->hasMorePages())
+               <div class="text-center mt-6">
+                   <form action="{{ route('gallery.index') }}" method="GET">
+                       <input type="hidden" name="search" value="{{ $search ?? '' }}">
+                       <input type="hidden" name="type" value="{{ $type ?? '' }}">
+                       <input type="hidden" name="per_page" value="{{ $perPage ?? 10 }}">
+                       <input type="hidden" name="page" value="{{ $page + 1 }}">
+                       <input type="hidden" name="load_more" value="1">
+                       <button type="submit" class="bg-blue-500 text-white p-2 rounded">View More</button>
+                   </form>
+               </div>
+           @endif
+       </div>
+   </body>
+
+   </html>
