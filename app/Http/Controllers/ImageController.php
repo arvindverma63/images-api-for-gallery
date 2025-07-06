@@ -219,25 +219,30 @@ class ImageController extends Controller
     {
         $query = Image::query();
 
-        // Search by title
+        // Search by title or image path
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%')
-                ->orWhere('image', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                    ->orWhere('image', 'like', '%' . $search . '%');
+            });
         }
 
         // Filter by image file extension
         if ($request->filled('type')) {
             $type = strtolower($request->type);
-            $query->where('image', 'like', '%.' . $type);
+            $query->whereRaw('LOWER(image) LIKE ?', ['%.' . $type]);
         }
 
-        $images = $query->orderBy("desc")->paginate(50);
+        // Order by created_at descending (change this to your actual timestamp column if needed)
+        $images = $query->orderBy('created_at', 'desc')->paginate(50);
 
         return response()->json($images);
     }
 
 
-     /**
+
+    /**
      * @OA\Post(
      *     path="/api/uploadImageDF",
      *     summary="Upload an image (already hosted on ImgBB or base64 string)",
