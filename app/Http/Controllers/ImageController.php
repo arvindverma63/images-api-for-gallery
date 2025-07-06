@@ -224,6 +224,7 @@ class ImageController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%')
                     ->orWhere('image', 'like', '%' . $search . '%');
             });
         }
