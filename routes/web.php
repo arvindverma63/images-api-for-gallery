@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'doLogin']);
+Route::get('/check-password', function () {
+    // This route is just to trigger the middleware
+
+    Route::get('/gallery', [AuthController::class, 'gallery']);
+})->middleware('password.check');
