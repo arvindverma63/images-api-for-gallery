@@ -9,15 +9,22 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class GalleryController extends Controller
 {
+    /**
+     * Display the image gallery with pagination and handle AJAX requests.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
+        // Retrieve input parameters
         $search = $request->input('search');
         $type = $request->input('type');
-        $perPage = $request->input('per_page', 10);
-        $page = $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 10);
+        $page = (int) $request->input('page', 1);
         $loadMore = $request->input('load_more', false);
 
-        // Base query
+        // Build the base query
         $query = Image::query()
             ->when($search, function ($query, $search) {
                 return $query->where('title', 'like', '%' . $search . '%')
@@ -31,7 +38,7 @@ class GalleryController extends Controller
         // Get total count for pagination
         $total = $query->count();
 
-        // If load_more, fetch all images up to the current page
+        // Fetch images based on load_more flag
         if ($loadMore) {
             $images = $query->take($perPage * $page)->get();
         } else {
@@ -42,7 +49,7 @@ class GalleryController extends Controller
         $images->transform(function ($image) {
             if (str_starts_with($image->image, 'https://pornbb.xyz')) {
                 try {
-                    // Spoof the Referer and User-Agent to mimic desifakes.com
+                    // Spoof headers to fetch image
                     $response = Http::withHeaders([
                         'Referer' => 'https://desifakes.com',
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -50,9 +57,8 @@ class GalleryController extends Controller
 
                     if ($response->successful()) {
                         $contentType = $response->header('Content-Type', 'image/jpeg');
-                        // Encode image as base64 data URL
                         $base64 = base64_encode($response->body());
-                        $image->proxy_url = 'data:' . $contentType . ';base64,' . $base64;
+                        $image->proxy_url = "data:{$contentType};base64,{$base64}";
                     } else {
                         $image->proxy_url = 'https://via.placeholder.com/200x200?text=Image+Not+Found';
                     }
@@ -65,7 +71,7 @@ class GalleryController extends Controller
             return $image;
         });
 
-        // Wrap images in a LengthAwarePaginator
+        // Create paginator
         $images = new LengthAwarePaginator(
             $images,
             $total,
@@ -75,6 +81,26 @@ class GalleryController extends Controller
         );
         $images->appends(['search' => $search, 'type' => $type, 'per_page' => $perPage, 'load_more' => $loadMore]);
 
+        // Handle AJAX requests
+        if ($request->ajax()) {
+            // Convert items to array for compatibility
+            $imageItems = collect($images->items())->map(function ($image) {
+                return [
+                    'proxy_url' => $image->proxy_url,
+                    'title' => $image->title ?? ''
+                ];
+            })->toArray();
+
+            return response()->json([
+                'images' => $imageItems,
+                'page' => $images->currentPage(),
+                'hasMorePages' => $images->hasMorePages(),
+                'total' => $images->total(),
+                'startIndex' => ($images->currentPage() - 1) * $images->perPage()
+            ]);
+        }
+
+        // Return view for non-AJAX requests
         return view('gallery', [
             'images' => $images,
             'search' => $search,

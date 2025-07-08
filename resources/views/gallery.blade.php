@@ -1,331 +1,397 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Gallery</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background: #f9fafb;
             font-family: 'Roboto', sans-serif;
             margin: 0;
+            background: #f9fafb;
+            overscroll-behavior-y: none;
         }
-
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-
-        .text-3xl {
-            font-size: 1.875rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 1.5rem;
-        }
-
-        .flex {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .items-center {
-            align-items: center;
-        }
-
-        .border {
-            border: 1px solid #e5e7eb;
-        }
-
-        .p-2 {
-            padding: 0.5rem;
-        }
-
-        .rounded {
-            border-radius: 0.375rem;
-        }
-
-        .mr-2 {
-            margin-right: 0.5rem;
-        }
-
-        .bg-blue-500 {
-            background: #3b82f6;
-        }
-
-        .text-white {
-            color: #fff;
-        }
-
-        .grid {
+        .gallery-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0;
         }
-
-        @media (min-width: 640px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
         @media (min-width: 768px) {
-            .grid {
+            .gallery-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
-
         @media (min-width: 1024px) {
-            .grid {
-                grid-template-columns: repeat(5, 1fr);
+            .gallery-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
-
-        .card {
-            width: 100%;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        .card:hover {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
         .card-img {
             width: 100%;
-            height: auto;
-            max-height: 300px;
+            height: 200px;
             object-fit: cover;
             display: block;
+            border: none;
         }
-
-        .text-sm {
-            font-size: 0.875rem;
-            color: #4b5563;
-        }
-
-        .justify-between {
-            justify-content: space-between;
-        }
-
-        .bg-white {
-            background: #fff;
-        }
-
-        .space-x-2>*+* {
-            margin-left: 0.5rem;
-        }
-
-        .text-red-500 {
-            color: #ef4444;
-        }
-
-        .text-gray-500 {
-            color: #6b7280;
-        }
-
-        .mt-6 {
-            margin-top: 1.5rem;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
         .fullscreen-dialog {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 50;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
             display: none;
+            overscroll-behavior: none;
         }
-
         .fullscreen-dialog:target {
-            display: block;
+            display: flex;
         }
-
         .dialog-content {
-            background: #000;
             width: 100%;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            touch-action: none;
         }
-
         .fullscreen-img {
             width: 100%;
-            max-height: calc(100vh - 2rem);
+            max-height: 100vh;
             object-fit: contain;
+            user-select: none;
+            -webkit-user-drag: none;
         }
-
         .nav-button {
             color: #fff;
-            font-size: 2rem;
+            font-size: 2.5rem;
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
             text-decoration: none;
             padding: 0.5rem;
+            z-index: 1001;
+            opacity: 0.7;
         }
-
+        .nav-button:hover {
+            opacity: 1;
+        }
         .nav-button.left {
-            left: 10px;
+            left: 0.5rem;
         }
-
         .nav-button.right {
-            right: 10px;
+            right: 0.5rem;
         }
-
         .close-button {
             color: #fff;
             font-size: 2rem;
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 0.5rem;
+            right: 0.5rem;
             text-decoration: none;
+            z-index: 1001;
+            opacity: 0.7;
         }
-
+        .close-button:hover {
+            opacity: 1;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         @media (max-width: 639px) {
             .container {
-                padding: 0.5rem;
+                padding: 0;
             }
-
-            .card {
-                margin: 0;
-            }
-
             .card-img {
-                max-height: 400px;
-                /* Larger images on mobile */
+                height: 180px;
             }
-
-            .text-3xl {
-                font-size: 1.5rem;
-                /* Smaller heading on mobile */
-            }
-
-            .flex {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .mr-2 {
-                margin-right: 0;
-                margin-bottom: 0.5rem;
-            }
-
-            input,
-            select,
-            button {
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            .fullscreen-img {
-                max-height: calc(100vh - 1rem);
-            }
-
             .nav-button {
-                font-size: 1.5rem;
-                padding: 0.25rem;
+                font-size: 2rem;
             }
-
             .close-button {
                 font-size: 1.5rem;
-                top: 5px;
-                right: 5px;
             }
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1 class="text-3xl">Image Gallery</h1>
-        <div class="flex">
-            <form action="{{ route('gallery.index') }}" method="GET" class="flex items-center mr-2">
-                <input type="text" name="search" value="{{ old('search', $search ?? '') }}"
-                    class="border p-2 rounded" placeholder="Search by title or description">
-                <button type="submit" class="bg-blue-500 text-white p-2 rounded">Search</button>
-            </form>
-            <form action="{{ route('gallery.index') }}" method="GET" class="flex items-center mr-2">
-                <input type="hidden" name="search" value="{{ $search ?? '' }}">
-                <select name="type" class="border p-2 rounded">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">Image Gallery</h1>
+        <div class="flex flex-col sm:flex-row items-center mb-4 gap-2">
+            <div class="flex w-full sm:w-auto items-center">
+                <input type="text" id="search-input" value="{{ old('search', $search ?? '') }}"
+                    class="border border-gray-300 p-2 rounded-l-md w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search by title or description">
+                <button id="search-button" class="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600">Search</button>
+            </div>
+            <div class="flex w-full sm:w-auto items-center">
+                <select id="type-select" class="border border-gray-300 p-2 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="" {{ old('type', $type ?? '') === '' ? 'selected' : '' }}>All Types</option>
                     <option value="jpg" {{ old('type', $type ?? '') === 'jpg' ? 'selected' : '' }}>jpg</option>
                     <option value="jpeg" {{ old('type', $type ?? '') === 'jpeg' ? 'selected' : '' }}>jpeg</option>
                     <option value="png" {{ old('type', $type ?? '') === 'png' ? 'selected' : '' }}>png</option>
                     <option value="gif" {{ old('type', $type ?? '') === 'gif' ? 'selected' : '' }}>gif</option>
                 </select>
-                <button type="submit" class="bg-blue-500 text-white p-2 rounded">Filter</button>
-            </form>
-            <form action="{{ route('gallery.index') }}" method="GET" class="flex items-center">
-                <input type="hidden" name="search" value="{{ $search ?? '' }}">
-                <input type="hidden" name="type" value="{{ $type ?? '' }}">
-                <input type="number" name="per_page" value="{{ old('per_page', $perPage ?? 10) }}"
-                    class="border p-2 rounded" placeholder="Per Page" min="1" max="100">
-                <button type="submit" class="bg-blue-500 text-white p-2 rounded">Apply</button>
-            </form>
+                <button id="filter-button" class="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600">Filter</button>
+            </div>
+            <div class="flex w-full sm:w-auto items-center">
+                <input type="number" id="per-page-input" value="{{ old('per_page', $perPage ?? 10) }}"
+                    class="border border-gray-300 p-2 rounded-l-md w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Per Page" min="1" max="100">
+                <button id="per-page-button" class="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600">Apply</button>
+            </div>
         </div>
 
-        <div class="grid">
+        <div id="spinner" class="spinner"></div>
+        <div id="gallery-grid" class="gallery-grid">
             @forelse ($images as $index => $image)
-                <div class="card border">
+                <div class="card">
                     <a href="#fullscreen-{{ $index }}">
                         <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}" class="card-img">
                     </a>
-                    <div class="p-2 flex justify-between items-center bg-white">
-                        <p class="text-sm">{{ $image->title ?? 'Untitled Image' }}</p>
-                        <div class="flex space-x-2">
-                            <span class="text-red-500">❤️</span>
-                            <span class="text-gray-500">↗</span>
-                        </div>
-                    </div>
                 </div>
-                <!-- Fullscreen Modal -->
-                <div id="fullscreen-{{ $index }}" class="fullscreen-dialog">
+                <div id="fullscreen-{{ $index }}" class="fullscreen-dialog" data-index="{{ $index }}">
                     <div class="dialog-content">
                         <a href="#" class="close-button material-icons">close</a>
                         @if ($index > 0)
-                            <a href="#fullscreen-{{ $index - 1 }}"
-                                class="nav-button left material-icons">chevron_left</a>
+                            <a href="#fullscreen-{{ $index - 1 }}" class="nav-button left material-icons">chevron_left</a>
                         @endif
-                        <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}"
-                            class="fullscreen-img">
+                        <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}" class="fullscreen-img">
                         @if ($index < $images->count() - 1)
-                            <a href="#fullscreen-{{ $index + 1 }}"
-                                class="nav-button right material-icons">chevron_right</a>
+                            <a href="#fullscreen-{{ $index + 1 }}" class="nav-button right material-icons">chevron_right</a>
                         @endif
                     </div>
                 </div>
             @empty
-                <p class="text-center text-sm">No images found.</p>
+                <p id="no-images" class="text-center text-gray-600 col-span-2">No images found.</p>
             @endforelse
         </div>
 
         @if ($images->hasMorePages())
-            <div class="text-center mt-6">
-                <form action="{{ route('gallery.index') }}" method="GET">
-                    <input type="hidden" name="search" value="{{ $search ?? '' }}">
-                    <input type="hidden" name="type" value="{{ $type ?? '' }}">
-                    <input type="hidden" name="per_page" value="{{ $perPage ?? 10 }}">
-                    <input type="hidden" name="page" value="{{ $page + 1 }}">
-                    <input type="hidden" name="load_more" value="1">
-                    <button type="submit" class="bg-blue-500 text-white p-2 rounded">View More</button>
-                </form>
+            <div id="view-more" class="text-center mt-6">
+                <button id="view-more-button" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                    data-page="{{ $page + 1 }}"
+                    data-search="{{ $search ?? '' }}"
+                    data-type="{{ $type ?? '' }}"
+                    data-per-page="{{ $perPage ?? 10 }}">View More</button>
             </div>
         @endif
     </div>
-</body>
 
+    <script>
+        // Show/hide spinner
+        function toggleSpinner(show) {
+            const spinner = document.getElementById('spinner');
+            spinner.style.display = show ? 'block' : 'none';
+        }
+
+        // Helper function to fetch images via AJAX
+        async function fetchImages(params, append = false) {
+            const galleryGrid = document.getElementById('gallery-grid');
+            if (!galleryGrid) {
+                console.error('Gallery grid element not found');
+                return;
+            }
+
+            toggleSpinner(true);
+            const url = new URL('{{ route('gallery.index') }}');
+            url.search = new URLSearchParams(params).toString();
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Non-JSON response received:', text);
+                    throw new Error('Expected JSON response, received HTML or other content');
+                }
+
+                const data = await response.json();
+                const viewMore = document.getElementById('view-more') || document.createElement('div');
+                if (!viewMore.id) {
+                    viewMore.id = 'view-more';
+                    viewMore.className = 'text-center mt-6';
+                    document.querySelector('.container').appendChild(viewMore);
+                }
+
+                // Clear grid if not appending
+                if (!append) {
+                    galleryGrid.innerHTML = '';
+                }
+
+                // Render images
+                if (data.images && data.images.length > 0) {
+                    data.images.forEach((image, index) => {
+                        const globalIndex = append ? (parseInt(data.startIndex) || 0) + index : index;
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.innerHTML = `
+                            <a href="#fullscreen-${globalIndex}">
+                                <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="card-img">
+                            </a>
+                            <div id="fullscreen-${globalIndex}" class="fullscreen-dialog" data-index="${globalIndex}">
+                                <div class="dialog-content">
+                                    <a href="#" class="close-button material-icons">close</a>
+                                    ${globalIndex > 0 ? `<a href="#fullscreen-${globalIndex - 1}" class="nav-button left material-icons">chevron_left</a>` : ''}
+                                    <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="fullscreen-img">
+                                    ${globalIndex < data.total - 1 ? `<a href="#fullscreen-${globalIndex + 1}" class="nav-button right material-icons">chevron_right</a>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        galleryGrid.appendChild(card);
+                    });
+
+                    // Update View More button
+                    if (data.hasMorePages) {
+                        viewMore.innerHTML = `
+                            <button id="view-more-button" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                                data-page="${data.page + 1}"
+                                data-search="${params.search || ''}"
+                                data-type="${params.type || ''}"
+                                data-per-page="${params.per_page || 10}">View More</button>
+                        `;
+                    } else {
+                        viewMore.innerHTML = '';
+                    }
+                } else {
+                    galleryGrid.innerHTML = '<p id="no-images" class="text-center text-gray-600 col-span-2">No images found.</p>';
+                    viewMore.innerHTML = '';
+                }
+
+                // Re-attach swipe listeners
+                attachSwipeListeners();
+            } catch (error) {
+                console.error('Error fetching images:', error);
+                galleryGrid.innerHTML = '<p id="no-images" class="text-center text-gray-600 col-span-2">Error loading images. Please try again.</p>';
+                viewMore.innerHTML = '';
+            } finally {
+                toggleSpinner(false);
+            }
+        }
+
+        // Swipe gesture handling
+        function attachSwipeListeners() {
+            document.querySelectorAll('.fullscreen-dialog').forEach(dialog => {
+                const content = dialog.querySelector('.dialog-content');
+                let startX, startY, isSwiping = false;
+
+                content.addEventListener('touchstart', e => {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    isSwiping = true;
+                });
+
+                content.addEventListener('touchmove', e => {
+                    if (!isSwiping) return;
+                    const currentX = e.touches[0].clientX;
+                    const currentY = e.touches[0].clientY;
+                    const diffX = startX - currentX;
+                    const diffY = startY - currentY;
+
+                    if (Math.abs(diffY) > Math.abs(diffX)) {
+                        isSwiping = false;
+                        return;
+                    }
+
+                    e.preventDefault();
+                });
+
+                content.addEventListener('touchend', e => {
+                    if (!isSwiping) return;
+                    isSwiping = false;
+                    const currentX = e.changedTouches[0].clientX;
+                    const diffX = startX - currentX;
+
+                    if (Math.abs(diffX) < 50) return;
+
+                    const index = parseInt(dialog.getAttribute('data-index'));
+                    if (diffX > 0 && document.querySelector(`#fullscreen-${index + 1}`)) {
+                        window.location.hash = `fullscreen-${index + 1}`;
+                    } else if (diffX < 0 && index > 0) {
+                        window.location.hash = `fullscreen-${index - 1}`;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.fullscreen-dialog').forEach(dialog => {
+                dialog.addEventListener('touchmove', e => {
+                    if (dialog.style.display === 'flex') {
+                        e.preventDefault();
+                    }
+                });
+            });
+        }
+
+        // Event listeners for search, filter, and per-page
+        document.getElementById('search-button').addEventListener('click', () => {
+            const params = {
+                search: document.getElementById('search-input').value,
+                type: document.getElementById('type-select').value,
+                per_page: document.getElementById('per-page-input').value,
+                page: 1
+            };
+            fetchImages(params);
+        });
+
+        document.getElementById('filter-button').addEventListener('click', () => {
+            const params = {
+                search: document.getElementById('search-input').value,
+                type: document.getElementById('type-select').value,
+                per_page: document.getElementById('per-page-input').value,
+                page: 1
+            };
+            fetchImages(params);
+        });
+
+        document.getElementById('per-page-button').addEventListener('click', () => {
+            const params = {
+                search: document.getElementById('search-input').value,
+                type: document.getElementById('type-select').value,
+                per_page: document.getElementById('per-page-input').value,
+                page: 1
+            };
+            fetchImages(params);
+        });
+
+        // View More button listener
+        document.addEventListener('click', e => {
+            if (e.target.id === 'view-more-button') {
+                const button = e.target;
+                const params = {
+                    search: button.dataset.search,
+                    type: button.dataset.type,
+                    per_page: button.dataset.perPage,
+                    page: button.dataset.page,
+                    load_more: 1
+                };
+                fetchImages(params, true);
+            }
+        });
+
+        // Initial swipe listeners
+        attachSwipeListeners();
+    </script>
+</body>
 </html>
