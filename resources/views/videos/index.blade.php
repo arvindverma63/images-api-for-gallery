@@ -87,6 +87,18 @@
         .swipe-right {
             right: 0;
         }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: none;
+            font-size: 1.5rem;
+            line-height: 1;
+            padding: 0.5rem 0.75rem;
+            z-index: 11;
+        }
     </style>
 </head>
 <body>
@@ -124,6 +136,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body p-0 position-relative">
+                    <button type="button" class="close-button" data-bs-dismiss="modal" aria-label="Close">&times;</button>
                     <div class="swipe-area swipe-left" onclick="navigateVideo(-1)"></div>
                     <div class="swipe-area swipe-right" onclick="navigateVideo(1)"></div>
                     <video controls class="modal-video" id="modalVideo">
