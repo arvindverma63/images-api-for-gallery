@@ -23,6 +23,7 @@ class GalleryController extends Controller
         $perPage = (int) $request->input('per_page', 10);
         $page = (int) $request->input('page', 1);
         $fullscreen = $request->input('fullscreen');
+        $append = $request->input('append', false);
 
         // Build the base query
         $query = Image::query()
@@ -38,9 +39,13 @@ class GalleryController extends Controller
         // Get total count for pagination
         $total = $query->count();
 
-        // Fetch images for the current page
-        $offset = ($page - 1) * $perPage;
-        $images = $query->offset($offset)->take($perPage)->get();
+        // Fetch images: append all images up to current page or just current page
+        if ($append) {
+            $images = $query->take($perPage * $page)->get();
+        } else {
+            $offset = ($page - 1) * $perPage;
+            $images = $query->offset($offset)->take($perPage)->get();
+        }
 
         // Transform image URLs
         $images->transform(function ($image) {
@@ -75,7 +80,7 @@ class GalleryController extends Controller
             $page,
             ['path' => route('gallery.index')]
         );
-        $images->appends(['search' => $search, 'type' => $type, 'per_page' => $perPage]);
+        $images->appends(['search' => $search, 'type' => $type, 'per_page' => $perPage, 'append' => $append]);
 
         // Handle fullscreen mode
         $fullscreenImage = null;
