@@ -41,10 +41,10 @@
         .modal-dialog {
             max-width: 100%;
             margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             height: 100vh;
+            display: flex;
+            align-items: flex-start; /* Align to top */
+            justify-content: flex-start; /* Align to left */
         }
         .modal-video {
             max-width: 90vw;
@@ -116,7 +116,7 @@
             @foreach ($videos as $video)
                 <div class="col">
                     <div class="video-card" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url }}" data-video-id="{{ $video->id }}">
-                        <video poster="{{ $video->thumbnail_url ?? 'https://placehold.co/300x300?text=Video' }}">
+                        <video poster="{{ $video->thumbnail_url ?? 'https://via.placeholder.com/300x300' }}">
                             <source src="{{ $video->proxied_url }}" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
