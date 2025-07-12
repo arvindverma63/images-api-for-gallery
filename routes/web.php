@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,3 +43,5 @@ Route::post('/logout', function () {
 Route::get('/gallery', [GalleryController::class, 'index'])
     ->middleware('password.check')
     ->name('gallery.index');
+
+Route::get('/videos',[VideoController::class,'index'])->name('videos.index');

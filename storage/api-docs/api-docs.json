@@ -312,6 +312,95 @@
                     }
                 }
             }
+        },
+        "/api/upload-videos": {
+            "post": {
+                "tags": [
+                    "Videos"
+                ],
+                "summary": "Upload a new video",
+                "description": "Uploads a video URL along with optional title and description.",
+                "operationId": "uploadVideo",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "url"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "My Sample Video"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "maxLength": 1000,
+                                        "example": "This is a sample video description."
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "example": "https://example.com/video.mp4"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Video uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "string",
+                                            "example": "video uploaded successfully"
+                                        },
+                                        "video": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "url": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/video.mp4"
+                                                    },
+                                                    "video": {
+                                                        "type": "string",
+                                                        "example": "My Sample Video"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error uploading video",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Unexpected error occurred"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -364,6 +453,10 @@
         {
             "name": "Image",
             "description": "Image"
+        },
+        {
+            "name": "Videos",
+            "description": "Videos"
         }
     ]
 }
