@@ -104,19 +104,19 @@ class VideoController extends Controller
         Log::info('Upload Videos API called', ['input' => $request->all()]);
 
         try {
-            $result = Video::created($request);
-
-            if (!$result['success']) {
-                Log::error('Upload failed', ['error' => $result['error']]);
-                return response()->json(['error' => $result['error']], 500);
-            }
+            // Correct Eloquent model creation
+            $video = Video::create([
+                'title' => $request->input('title'),
+                'description' => $request->input('description'),
+                'url' => $request->input('url'),
+            ]);
 
             return response()->json([
                 'success' => 'video uploaded successfully',
                 'video' => [
                     [
-                        'url' => $result['url'],
-                        'video' => $result['title'],
+                        'url' => $video->url,
+                        'video' => $video->title,
                     ]
                 ]
             ], 200);
