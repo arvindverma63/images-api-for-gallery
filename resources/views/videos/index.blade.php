@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,42 +11,53 @@
             background-color: #000;
             color: #fff;
         }
+
         .video-card {
             border: none;
             background: none;
             padding: 0;
             cursor: pointer;
         }
+
         .video-card video {
             width: 100%;
-            aspect-ratio: 1 / 1; /* Square like Instagram */
+            aspect-ratio: 1 / 1;
+            /* Square like Instagram */
             object-fit: cover;
         }
+
         .search-bar {
             max-width: 500px;
             margin: 1rem auto;
         }
+
         .search-bar input {
             background-color: #222;
             color: #fff;
             border: 1px solid #444;
         }
+
         .search-bar button {
             background-color: #007bff;
             border: none;
         }
+
         .modal-content {
             background: none;
             border: none;
         }
+
         .modal-dialog {
             max-width: 100%;
             margin: 0;
             height: 100vh;
             display: flex;
-            align-items: flex-start; /* Align to top */
-            justify-content: flex-start; /* Align to left */
+            align-items: flex-start;
+            /* Align to top */
+            justify-content: flex-start;
+            /* Align to left */
         }
+
         .modal-video {
             max-width: 90vw;
             max-height: 90vh;
@@ -53,27 +65,33 @@
             height: auto;
             object-fit: contain;
         }
+
         .modal-footer {
             border: none;
             justify-content: space-between;
             padding: 0.5rem;
         }
+
         .modal-footer button {
             background: rgba(0, 0, 0, 0.7);
             color: #fff;
             border: none;
         }
+
         .pagination {
             justify-content: center;
         }
+
         .pagination .page-link {
             background-color: #222;
             border: 1px solid #444;
             color: #fff;
         }
+
         .pagination .page-link:hover {
             background-color: #444;
         }
+
         .swipe-area {
             position: absolute;
             top: 0;
@@ -81,12 +99,15 @@
             width: 50%;
             z-index: 10;
         }
+
         .swipe-left {
             left: 0;
         }
+
         .swipe-right {
             right: 0;
         }
+
         .close-button {
             position: absolute;
             top: 10px;
@@ -101,12 +122,14 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container my-3">
         <!-- Search Bar -->
         <form action="{{ route('videos.index') }}" method="GET" class="search-bar">
             <div class="input-group">
-                <input type="text" name="search" class="form-control" placeholder="Search videos..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control" placeholder="Search videos..."
+                    value="{{ request('search') }}">
                 <button type="submit" class="btn btn-primary">Search</button>
             </div>
         </form>
@@ -118,14 +141,23 @@
             @else
                 @foreach ($videos as $video)
                     <div class="col">
-                        <div class="video-card" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url ?? 'No URL' }}" data-video-id="{{ $video->id ?? 'No ID' }}">
-                            <video poster="{{ $video->thumbnail_url ?? 'https://via.placeholder.com/300x300' }}">
-                                <source src="{{ $video->proxied_url ?? 'https://via.placeholder.com/300x300' }}" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
+                        <div class="card bg-dark text-white h-100 video-card" data-bs-toggle="modal"
+                            data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url ?? '' }}"
+                            data-video-id="{{ $video->id ?? '' }}">
+                            @if (!empty($video->thumbnail_url))
+                                <img src="{{ $video->thumbnail_url }}" class="card-img-top" alt="Video Thumbnail">
+                            @else
+                                <video class="card-img-top" muted>
+                                    <source src="{{ $video->proxied_url }}" type="video/mp4">
+                                </video>
+                            @endif
+                            {{-- <div class="card-body p-2">
+                                <h6 class="card-title mb-0 text-truncate">{{ $video->title ?? 'Untitled' }}</h6>
+                            </div> --}}
                         </div>
                     </div>
                 @endforeach
+
             @endif
         </div>
 
@@ -167,7 +199,10 @@
             const videoData = [
                 @if (!$videos->isEmpty())
                     @foreach ($videos as $video)
-                        { id: {{ $video->id ?? 'null' }}, src: "{{ $video->proxied_url ?? 'null' }}" },
+                        {
+                            id: {{ $video->id ?? 'null' }},
+                            src: "{{ $video->proxied_url ?? 'null' }}"
+                        },
                     @endforeach
                 @endif
             ];
@@ -218,4 +253,5 @@
         });
     </script>
 </body>
+
 </html>
