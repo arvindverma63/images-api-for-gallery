@@ -54,7 +54,7 @@
             overscroll-behavior: none;
         }
 
-        .fullscreen-dialog:target {
+        .fullscreen-dialog.active {
             display: flex;
         }
 
@@ -196,24 +196,24 @@
         <div id="gallery-grid" class="gallery-grid">
             @forelse ($images as $index => $image)
                 <div class="card">
-                    <a href="#fullscreen-{{ $index }}">
+                    <a href="javascript:void(0)" class="image-link" data-fullscreen-id="fullscreen-{{ $index }}">
                         <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}" class="card-img"
                             onerror="this.closest('.card').classList.add('hidden')">
                     </a>
                 </div>
                 <div id="fullscreen-{{ $index }}" class="fullscreen-dialog" data-index="{{ $index }}">
                     <div class="dialog-content">
-                        <a href="#" class="close-button material-icons"
-                            onclick="window.scrollTo({top: 0, behavior: 'smooth'});">close</a>
+                        <a href="javascript:void(0)" class="close-button material-icons"
+                            onclick="closeFullscreen(); window.scrollTo({top: 0, behavior: 'smooth'});">close</a>
                         @if ($index > 0)
-                            <a href="#fullscreen-{{ $index - 1 }}"
-                                class="nav-button left material-icons">chevron_left</a>
+                            <a href="javascript:void(0)" class="nav-button left material-icons"
+                                data-fullscreen-id="fullscreen-{{ $index - 1 }}">chevron_left</a>
                         @endif
                         <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}" class="fullscreen-img"
                             onerror="this.closest('.fullscreen-dialog').style.display='none'; window.scrollTo({top: 0, behavior: 'smooth'});">
                         @if ($index < $images->count() - 1)
-                            <a href="#fullscreen-{{ $index + 1 }}"
-                                class="nav-button right material-icons">chevron_right</a>
+                            <a href="javascript:void(0)" class="nav-button right material-icons"
+                                data-fullscreen-id="fullscreen-{{ $index + 1 }}">chevron_right</a>
                         @endif
                     </div>
                 </div>
@@ -238,6 +238,24 @@
             spinner.style.display = show ? 'block' : 'none';
         }
 
+        // Open fullscreen dialog
+        function openFullscreen(id) {
+            document.querySelectorAll('.fullscreen-dialog').forEach(dialog => {
+                dialog.classList.remove('active');
+            });
+            const dialog = document.getElementById(id);
+            if (dialog) {
+                dialog.classList.add('active');
+            }
+        }
+
+        // Close fullscreen dialog
+        function closeFullscreen() {
+            document.querySelectorAll('.fullscreen-dialog').forEach(dialog => {
+                dialog.classList.remove('active');
+            });
+        }
+
         // Helper function to fetch images via AJAX
         async function fetchImages(params, append = false) {
             const galleryGrid = document.getElementById('gallery-grid');
@@ -249,6 +267,9 @@
             toggleSpinner(true);
             const url = new URL('{{ route('gallery.index') }}');
             url.search = new URLSearchParams(params).toString();
+
+            // Store current scroll position
+            const scrollY = window.scrollY;
 
             try {
                 const response = await fetch(url, {
@@ -288,15 +309,15 @@
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
-                            <a href="#fullscreen-${globalIndex}">
+                            <a href="javascript:void(0)" class="image-link" data-fullscreen-id="fullscreen-${globalIndex}">
                                 <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="card-img" onerror="this.closest('.card').classList.add('hidden')">
                             </a>
                             <div id="fullscreen-${globalIndex}" class="fullscreen-dialog" data-index="${globalIndex}">
                                 <div class="dialog-content">
-                                    <a href="#" class="close-button material-icons" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">close</a>
-                                    ${globalIndex > 0 ? `<a href="#fullscreen-${globalIndex - 1}" class="nav-button left material-icons">chevron_left</a>` : ''}
+                                    <a href="javascript:void(0)" class="close-button material-icons" onclick="closeFullscreen(); window.scrollTo({top: 0, behavior: 'smooth'});">close</a>
+                                    ${globalIndex > 0 ? `<a href="javascript:void(0)" class="nav-button left material-icons" data-fullscreen-id="fullscreen-${globalIndex - 1}">chevron_left</a>` : ''}
                                     <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="fullscreen-img" onerror="this.closest('.fullscreen-dialog').style.display='none'; window.scrollTo({top: 0, behavior: 'smooth'});">
-                                    ${globalIndex < data.total - 1 ? `<a href="#fullscreen-${globalIndex + 1}" class="nav-button right material-icons">chevron_right</a>` : ''}
+                                    ${globalIndex < data.total - 1 ? `<a href="javascript:void(0)" class="nav-button right material-icons" data-fullscreen-id="fullscreen-${globalIndex + 1}">chevron_right</a>` : ''}
                                 </div>
                             </div>
                         `;
@@ -321,7 +342,16 @@
                     viewMore.innerHTML = '';
                 }
 
-                // Re-attach swipe listeners
+                // Restore scroll position
+                if (append) {
+                    window.scrollTo({
+                        top: scrollY,
+                        behavior: 'instant'
+                    });
+                }
+
+                // Re-attach event listeners
+                attachImageListeners();
                 attachSwipeListeners();
             } catch (error) {
                 console.error('Error fetching images:', error);
@@ -331,6 +361,22 @@
             } finally {
                 toggleSpinner(false);
             }
+        }
+
+        // Attach event listeners for image clicks and navigation
+        function attachImageListeners() {
+            document.querySelectorAll('.image-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    const fullscreenId = link.getAttribute('data-fullscreen-id');
+                    openFullscreen(fullscreenId);
+                });
+            });
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const fullscreenId = button.getAttribute('data-fullscreen-id');
+                    openFullscreen(fullscreenId);
+                });
+            });
         }
 
         // Swipe gesture handling
@@ -370,16 +416,16 @@
 
                     const index = parseInt(dialog.getAttribute('data-index'));
                     if (diffX > 0 && document.querySelector(`#fullscreen-${index + 1}`)) {
-                        window.location.hash = `fullscreen-${index + 1}`;
+                        openFullscreen(`fullscreen-${index + 1}`);
                     } else if (diffX < 0 && index > 0) {
-                        window.location.hash = `fullscreen-${index - 1}`;
+                        openFullscreen(`fullscreen-${index - 1}`);
                     }
                 });
             });
 
             document.querySelectorAll('.fullscreen-dialog').forEach(dialog => {
                 dialog.addEventListener('touchmove', e => {
-                    if (dialog.style.display === 'flex') {
+                    if (dialog.classList.contains('active')) {
                         e.preventDefault();
                     }
                 });
@@ -432,7 +478,8 @@
             }
         });
 
-        // Initial swipe listeners
+        // Initial listeners
+        attachImageListeners();
         attachSwipeListeners();
     </script>
 </body>
