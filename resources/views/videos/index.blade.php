@@ -16,7 +16,7 @@
             padding: 0;
             cursor: pointer;
         }
-        .video-card img {
+        .video-card video {
             width: 100%;
             aspect-ratio: 1 / 1; /* Square like Instagram */
             object-fit: cover;
@@ -104,7 +104,10 @@
             @foreach ($videos as $video)
                 <div class="col">
                     <div class="video-card" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url }}" data-video-id="{{ $video->id }}">
-                        <img src="https://via.placeholder.com/300x300?text={{ $video->title }}" alt="Video thumbnail">
+                        <video autoplay muted loop playsinline>
+                            <source src="{{ $video->proxied_url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
                 </div>
             @endforeach
