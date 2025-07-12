@@ -192,7 +192,7 @@
                                     <a href="javascript:void(0)" class="close-button absolute top-4 right-4 text-white text-2xl opacity-70 hover:opacity-100" onclick="closeFullscreen()">X</a>
                                     ${globalIndex > 0 ? `<a href="javascript:void(0)" class="nav-button absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100" data-fullscreen-id="fullscreen-${globalIndex - 1}"><</a>` : ''}
                                     <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="max-w-full max-h-screen object-contain select-none" onerror="this.closest('.fixed').classList.add('hidden')">
-                                    ${globalIndex < data.total - 1 ? `<a href="javascript:void(0)" class="nav-button absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100" data-fullscreen-id="fullscreen-${globalIndex + 1}">></a>` : ''}
+                                    ${globalIndex < data.total - 1 ? `<a href="javascript:void(0)" class="nav-button absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100" data-fullscreen-id="fullscreen-${globalIndex + 1}"></a>` : ''}
                                 </div>
                             </div>
                         `;
