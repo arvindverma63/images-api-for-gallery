@@ -38,54 +38,252 @@
             </div>
         </form>
 
-        @if ($errorMessage)
-            <p class="text-red-600 text-center mt-4">{{ $errorMessage }}</p>
-        @endif
+        <p id="error-message" class="text-red-600 text-center mt-4 hidden">Failed to load images. Please try again.</p>
 
-        @if ($images->isEmpty() && !$fullscreenImage)
-            <p class="text-center text-gray-600 col-span-2">No images found.</p>
-        @endif
-
-        @if ($fullscreenImage)
-            <div class="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center">
-                <div class="relative w-full h-full flex items-center justify-center">
-                    <a href="{{ route('gallery.index', ['search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}"
-                        class="absolute top-4 right-4 text-white text-2xl opacity-70 hover:opacity-100">X</a>
-                    @if ($prevImage)
-                        <a href="{{ route('gallery.index', ['fullscreen' => $prevImage->id, 'search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}"
-                            class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100">&lt;</a>
-                    @endif
-                    <img src="{{ $fullscreenImage->proxy_url }}" alt="{{ $fullscreenImage->title ?? 'Image' }}"
-                        class="max-w-full max-h-screen object-contain select-none"
-                        onerror="this.closest('.fixed').classList.add('hidden')">
-                    @if ($nextImage)
-                        <a href="{{ route('gallery.index', ['fullscreen' => $nextImage->id, 'search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}"
-                            class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100">&gt;</a>
-                    @endif
-                </div>
-            </div>
-        @else
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0">
-                @foreach ($images as $image)
-                    <div class="group" data-image-id="{{ $image->id }}">
-                        <a href="{{ route('gallery.index', ['fullscreen' => $image->id, 'search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}"
-                            class="block">
+        <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0">
+            @forelse ($images as $index => $image)
+                <div class="group" data-image-id="{{ $image->id }}" data-image-url="{{ $image->proxy_url }}"
+                    data-index="{{ $index }}">
+                    <a href="javascript:void(0)" class="image-link block"
+                        data-fullscreen-id="fullscreen-{{ $index }}">
+                        <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}"
+                            class="w-full h-48 object-cover block border-none"
+                            onerror="this.closest('.group').classList.add('hidden')">
+                    </a>
+                    <div id="fullscreen-{{ $index }}"
+                        class="fixed inset-0 bg-black bg-opacity-95 z-50 items-center justify-center hidden">
+                        <div class="relative w-full h-full flex items-center justify-center">
+                            <a href="javascript:void(0)"
+                                class="close-button absolute top-4 right-4 text-white text-2xl opacity-70 hover:opacity-100"
+                                onclick="closeFullscreen()">X</a>
+                            @if ($index > 0)
+                                <a href="javascript:void(0)"
+                                    class="nav-button absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100"
+                                    data-fullscreen-id="fullscreen-{{ $index - 1 }}">></a>
+                            @endif
                             <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}"
-                                class="w-full h-48 object-cover block border-none"
-                                onerror="this.closest('.group').classList.add('hidden')">
-                        </a>
+                                class="max-w-full max-h-screen object-contain select-none"
+                                onerror="this.closest('.fixed').classList.add('hidden')">
+                            @if ($index < $images->count() - 1)
+                                <a href="javascript:void(0)"
+                                    class="nav-button absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100"
+                                    data-fullscreen-id="fullscreen-{{ $index + 1 }}">
+                                    << /a>
+                            @endif
+                        </div>
                     </div>
-                @endforeach
-            </div>
-
-            @if ($images->hasMorePages())
-                <div class="text-center mt-6">
-                    <a href="{{ route('gallery.index', ['page' => $page + 1, 'search' => $search, 'type' => $type, 'per_page' => $perPage, 'append' => true]) }}"
-                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">View More</a>
                 </div>
-            @endif
+            @empty
+                <p id="no-images" class="text-center text-gray-600 col-span-2">No images found.</p>
+            @endforelse
+        </div>
+
+        @if ($images->hasMorePages())
+            <div id="view-more" class="text-center mt-6">
+                <button id="view-more-button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    data-page="{{ $page + 1 }}" data-search="{{ $search ?? '' }}" data-type="{{ $type ?? '' }}"
+                    data-per-page="{{ $perPage ?? 10 }}">View More</button>
+            </div>
         @endif
     </div>
+
+    <script>
+        // Track loaded image IDs to prevent duplicates
+        const loadedImageIds = new Set(
+            Array.from(document.querySelectorAll('.group')).map(card => card.getAttribute('data-image-id')).filter(id =>
+                id)
+        );
+
+        // Show/hide error message
+        function toggleErrorMessage(show, message = 'Failed to load images. Please try again.') {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.classList.toggle('hidden', !show);
+        }
+
+        // Open fullscreen dialog
+        function openFullscreen(id) {
+            document.querySelectorAll('.fixed').forEach(dialog => {
+                dialog.classList.add('hidden');
+            });
+            const dialog = document.getElementById(id);
+            if (dialog) {
+                dialog.classList.remove('hidden');
+            }
+        }
+
+        // Close fullscreen dialog
+        function closeFullscreen() {
+            document.querySelectorAll('.fixed').forEach(dialog => {
+                dialog.classList.add('hidden');
+            });
+        }
+
+        // Fetch images via AJAX
+        async function fetchImages(params, append = false) {
+            const galleryGrid = document.getElementById('gallery-grid');
+            if (!galleryGrid) {
+                console.error('Gallery grid element not found');
+                toggleErrorMessage(true, 'Gallery grid element not found.');
+                return;
+            }
+
+            toggleErrorMessage(false);
+            const url = new URL('{{ route('gallery.index') }}');
+            url.search = new URLSearchParams(params).toString();
+            console.log('Fetching images with params:', params, 'URL:', url.toString());
+
+            const scrollY = window.scrollY;
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Received data:', data);
+
+                const viewMore = document.getElementById('view-more') || document.createElement('div');
+                if (!viewMore.id) {
+                    viewMore.id = 'view-more';
+                    viewMore.className = 'text-center mt-6';
+                    document.querySelector('.container').appendChild(viewMore);
+                }
+
+                if (!append) {
+                    galleryGrid.innerHTML = '';
+                    loadedImageIds.clear();
+                }
+
+                let imagesAdded = 0;
+                if (data.images && data.images.length > 0) {
+                    const existingIndices = Array.from(document.querySelectorAll('.fixed')).map(dialog =>
+                        parseInt(dialog.getAttribute('data-index')) || 0
+                    );
+                    const maxIndex = existingIndices.length > 0 ? Math.max(...existingIndices) : -1;
+
+                    data.images.forEach((image, index) => {
+                        if (loadedImageIds.has(image.id)) {
+                            console.log('Skipping duplicate image ID:', image.id);
+                            return;
+                        }
+
+                        const globalIndex = append ? maxIndex + 1 + index : index;
+                        loadedImageIds.add(image.id);
+                        imagesAdded++;
+
+                        const card = document.createElement('div');
+                        card.className = 'group';
+                        card.setAttribute('data-image-id', image.id);
+                        card.setAttribute('data-image-url', image.proxy_url);
+                        card.setAttribute('data-index', globalIndex);
+                        card.innerHTML = `
+                            <a href="javascript:void(0)" class="image-link block" data-fullscreen-id="fullscreen-${globalIndex}">
+                                <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="w-full h-48 object-cover block border-none" onerror="this.closest('.group').classList.add('hidden')">
+                            </a>
+                            <div id="fullscreen-${globalIndex}" class="fixed inset-0 bg-black bg-opacity-95 z-50 items-center justify-center hidden" data-index="${globalIndex}">
+                                <div class="relative w-full h-full flex items-center justify-center">
+                                    <a href="javascript:void(0)" class="close-button absolute top-4 right-4 text-white text-2xl opacity-70 hover:opacity-100" onclick="closeFullscreen()">X</a>
+                                    ${globalIndex > 0 ? `<a href="javascript:void(0)" class="nav-button absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100" data-fullscreen-id="fullscreen-${globalIndex - 1}"><</a>` : ''}
+                                    <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="max-w-full max-h-screen object-contain select-none" onerror="this.closest('.fixed').classList.add('hidden')">
+                                    ${globalIndex < data.total - 1 ? `<a href="javascript:void(0)" class="nav-button absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100" data-fullscreen-id="fullscreen-${globalIndex + 1}">></a>` : ''}
+                                </div>
+                            </div>
+                        `;
+                        galleryGrid.appendChild(card);
+                    });
+
+                    if (data.hasMorePages) {
+                        viewMore.innerHTML = `
+                            <button id="view-more-button" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                data-page="${data.page + 1}"
+                                data-search="${params.search || ''}"
+                                data-type="${params.type || ''}"
+                                data-per-page="${params.per_page || 10}">View More</button>
+                        `;
+                    } else {
+                        viewMore.innerHTML = '';
+                    }
+                } else {
+                    console.log('No images received in response');
+                    if (append) {
+                        toggleErrorMessage(true, 'No more images to load.');
+                        viewMore.innerHTML = '';
+                    } else {
+                        galleryGrid.innerHTML =
+                            '<p id="no-images" class="text-center text-gray-600 col-span-2">No images found.</p>';
+                        viewMore.innerHTML = '';
+                    }
+                }
+
+                console.log(`Added ${imagesAdded} new images`);
+
+                if (append) {
+                    window.scrollTo({
+                        top: scrollY,
+                        behavior: 'instant'
+                    });
+                }
+
+                attachImageListeners();
+            } catch (error) {
+                console.error('Error fetching images:', error);
+                toggleErrorMessage(true);
+                if (!append) {
+                    galleryGrid.innerHTML =
+                        '<p id="no-images" class="text-center text-gray-600 col-span-2">Error loading images.</p>';
+                }
+                viewMore.innerHTML = '';
+            }
+        }
+
+        // Attach event listeners for image clicks and navigation
+        function attachImageListeners() {
+            document.querySelectorAll('.image-link').forEach(link => {
+                link.removeEventListener('click', handleImageClick);
+                link.addEventListener('click', handleImageClick);
+            });
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.removeEventListener('click', handleNavClick);
+                button.addEventListener('click', handleNavClick);
+            });
+        }
+
+        function handleImageClick() {
+            const fullscreenId = this.getAttribute('data-fullscreen-id');
+            openFullscreen(fullscreenId);
+        }
+
+        function handleNavClick() {
+            const fullscreenId = this.getAttribute('data-fullscreen-id');
+            openFullscreen(fullscreenId);
+        }
+
+        // Event listeners for view more
+        document.addEventListener('click', e => {
+            if (e.target.id === 'view-more-button') {
+                const button = e.target;
+                const params = {
+                    search: button.dataset.search,
+                    type: button.dataset.type,
+                    per_page: button.dataset.perPage,
+                    page: button.dataset.page,
+                    ajax: 1
+                };
+                console.log('View More clicked with params:', params);
+                fetchImages(params, true);
+            }
+        });
+
+        // Initial listeners
+        attachImageListeners();
+    </script>
 </body>
 
 </html>
