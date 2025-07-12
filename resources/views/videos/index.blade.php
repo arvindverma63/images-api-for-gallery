@@ -116,7 +116,7 @@
             @foreach ($videos as $video)
                 <div class="col">
                     <div class="video-card" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url }}" data-video-id="{{ $video->id }}">
-                        <img src="{{ $video->thumbnail_url ?? 'https://via.placeholder.com/300x300?text=Video' }}" alt="Video thumbnail">
+                        <img src="{{ $video->thumbnail_url ?? 'https://placehold.co/300x300?text=' . urlencode($video->title) }}" alt="{{ $video->title }} thumbnail">
                     </div>
                 </div>
             @endforeach
