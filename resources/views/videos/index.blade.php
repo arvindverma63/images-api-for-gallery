@@ -113,16 +113,20 @@
 
         <!-- Video Grid -->
         <div class="row row-cols-2 row-cols-md-6 g-1">
-            @foreach ($videos as $video)
-                <div class="col">
-                    <div class="video-card" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url }}" data-video-id="{{ $video->id }}">
-                        <video poster="{{ $video->thumbnail_url ?? 'https://via.placeholder.com/300x300' }}">
-                            <source src="{{ $video->proxied_url }}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
+            @if ($videos->isEmpty())
+                <p>No videos found.</p>
+            @else
+                @foreach ($videos as $video)
+                    <div class="col">
+                        <div class="video-card" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url ?? 'No URL' }}" data-video-id="{{ $video->id ?? 'No ID' }}">
+                            <video poster="{{ $video->thumbnail_url ?? 'https://via.placeholder.com/300x300' }}">
+                                <source src="{{ $video->proxied_url ?? 'https://via.placeholder.com/300x300' }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            @endif
         </div>
 
         <!-- Pagination -->
@@ -161,10 +165,14 @@
             const videoModal = document.getElementById('videoModal');
             let currentVideoIndex = 0;
             const videoData = [
-                @foreach ($videos as $video)
-                    { id: {{ $video->id }}, src: "{{ $video->proxied_url }}" },
-                @endforeach
+                @if (!$videos->isEmpty())
+                    @foreach ($videos as $video)
+                        { id: {{ $video->id ?? 'null' }}, src: "{{ $video->proxied_url ?? 'null' }}" },
+                    @endforeach
+                @endif
             ];
+
+            console.log('Video Data:', videoData);
 
             videoCards.forEach((card, index) => {
                 card.addEventListener('click', () => {
@@ -180,9 +188,13 @@
 
             function updateModalVideo() {
                 const video = videoData[currentVideoIndex];
-                modalVideoSource.setAttribute('src', video.src);
-                modalVideo.load();
-                modalVideo.play();
+                if (video && video.src && video.src !== 'null') {
+                    modalVideoSource.setAttribute('src', video.src);
+                    modalVideo.load();
+                    modalVideo.play();
+                } else {
+                    console.error('No valid video source at index:', currentVideoIndex);
+                }
             }
 
             videoModal.addEventListener('hidden.bs.modal', () => {
