@@ -59,7 +59,7 @@
                             @if ($index > 0)
                                 <a href="javascript:void(0)"
                                     class="nav-button absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100"
-                                    data-fullscreen-id="fullscreen-{{ $index - 1 }}">></a>
+                                    data-fullscreen-id="fullscreen-{{ $index - 1 }}"></a>
                             @endif
                             <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}"
                                 class="max-w-full max-h-screen object-contain select-none"
