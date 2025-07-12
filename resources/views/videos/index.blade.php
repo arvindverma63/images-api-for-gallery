@@ -16,7 +16,7 @@
             padding: 0;
             cursor: pointer;
         }
-        .video-card video {
+        .video-card img {
             width: 100%;
             aspect-ratio: 1 / 1; /* Square like Instagram */
             object-fit: cover;
@@ -116,10 +116,7 @@
             @foreach ($videos as $video)
                 <div class="col">
                     <div class="video-card" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-src="{{ $video->proxied_url }}" data-video-id="{{ $video->id }}">
-                        <video autoplay muted loop playsinline>
-                            <source src="{{ $video->proxied_url }}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
+                        <img src="{{ $video->thumbnail_url ?? 'https://via.placeholder.com/300x300?text=Video' }}" alt="Video thumbnail">
                     </div>
                 </div>
             @endforeach
@@ -136,7 +133,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body p-0 position-relative">
-                    <button type="button" class="close-button" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+                    <button type="button" class="close-button" data-bs-dismiss="modal" aria-label="Close">×</button>
                     <div class="swipe-area swipe-left" onclick="navigateVideo(-1)"></div>
                     <div class="swipe-area swipe-right" onclick="navigateVideo(1)"></div>
                     <video controls class="modal-video" id="modalVideo">
