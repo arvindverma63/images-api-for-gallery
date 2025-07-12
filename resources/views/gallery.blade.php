@@ -33,7 +33,7 @@
             <div class="flex w-full sm:w-auto items-center">
                 <input type="number" id="per-page-input" name="per_page" value="{{ old('per_page', $perPage ?? 10) }}"
                     class="border border-gray-300 p-2 rounded-l-md w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Per Page" min="1" max="100">
+                    placeholder="Per Page" min="1" max="1000">
                 <button type="submit" class="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600">Apply</button>
             </div>
         </form>
