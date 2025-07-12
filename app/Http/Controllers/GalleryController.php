@@ -22,7 +22,7 @@ class GalleryController extends Controller
         $type = $request->input('type');
         $perPage = (int) $request->input('per_page', 10);
         $page = (int) $request->input('page', 1);
-        $fullscreen = $request->input('fullscreen'); // Image ID for fullscreen mode
+        $fullscreen = $request->input('fullscreen');
 
         // Build the base query
         $query = Image::query()
@@ -38,7 +38,7 @@ class GalleryController extends Controller
         // Get total count for pagination
         $total = $query->count();
 
-        // Fetch images for the current page only
+        // Fetch images for the current page
         $offset = ($page - 1) * $perPage;
         $images = $query->offset($offset)->take($perPage)->get();
 
@@ -46,7 +46,6 @@ class GalleryController extends Controller
         $images->transform(function ($image) {
             if (str_starts_with($image->image, 'https://pornbb.xyz')) {
                 try {
-                    // Spoof headers to fetch image
                     $response = Http::withHeaders([
                         'Referer' => 'https://desifakes.com',
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -80,6 +79,10 @@ class GalleryController extends Controller
 
         // Handle fullscreen mode
         $fullscreenImage = null;
+        $prevImage = null;
+        $nextImage = null;
+        $errorMessage = null;
+
         if ($fullscreen) {
             $fullscreenImage = Image::find($fullscreen);
             if ($fullscreenImage) {
@@ -104,10 +107,25 @@ class GalleryController extends Controller
                 } else {
                     $fullscreenImage->proxy_url = $fullscreenImage->image;
                 }
+
+                // Find prev/next images based on database order
+                $baseQuery = Image::query()
+                    ->when($search, function ($query, $search) {
+                        return $query->where('title', 'like', '%' . $search . '%')
+                            ->orWhere('description', 'like', '%' . $search . '%');
+                    })
+                    ->when($type, function ($query, $type) {
+                        return $query->where('image', 'like', '%.' . $type);
+                    })
+                    ->orderBy('id', 'DESC');
+
+                $prevImage = $baseQuery->where('id', '>', $fullscreenImage->id)->first();
+                $nextImage = $baseQuery->where('id', '<', $fullscreenImage->id)->first();
+            } else {
+                $errorMessage = 'Image not found for fullscreen view.';
             }
         }
 
-        // Return view
         return view('gallery', [
             'images' => $images,
             'search' => $search,
@@ -115,6 +133,9 @@ class GalleryController extends Controller
             'perPage' => $perPage,
             'page' => $page,
             'fullscreenImage' => $fullscreenImage,
+            'prevImage' => $prevImage,
+            'nextImage' => $nextImage,
+            'errorMessage' => $errorMessage,
         ]);
     }
 }

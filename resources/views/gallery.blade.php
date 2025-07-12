@@ -4,114 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Gallery</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            background: #f9fafb;
-            overscroll-behavior-y: none;
-        }
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0;
-        }
-        @media (min-width: 768px) {
-            .gallery-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        @media (min-width: 1024px) {
-            .gallery-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        .card-img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-            border: none;
-        }
-        .fullscreen-dialog {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            display: none;
-            overscroll-behavior: none;
-            align-items: center;
-            justify-content: center;
-        }
-        .fullscreen-dialog.active {
-            display: flex;
-        }
-        .dialog-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        .fullscreen-img {
-            width: 100%;
-            max-height: 100vh;
-            object-fit: contain;
-            user-select: none;
-            -webkit-user-drag: none;
-        }
-        .nav-button {
-            color: #fff;
-            font-size: 2.5rem;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            text-decoration: none;
-            padding: 0.5rem;
-            z-index: 1001;
-            opacity: 0.7;
-        }
-        .nav-button:hover {
-            opacity: 1;
-        }
-        .nav-button.left {
-            left: 0.5rem;
-        }
-        .nav-button.right {
-            right: 0.5rem;
-        }
-        .close-button {
-            color: #fff;
-            font-size: 2rem;
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            text-decoration: none;
-            z-index: 1001;
-            opacity: 0.7;
-        }
-        .close-button:hover {
-            opacity: 1;
-        }
-        .card.hidden {
-            display: none;
-        }
-        .error-message {
-            color: #e3342f;
-            text-align: center;
-            margin-top: 1rem;
-            display: none;
-        }
-    </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">Image Gallery</h1>
         <form method="GET" action="{{ route('gallery.index') }}" class="flex flex-col sm:flex-row items-center mb-4 gap-2">
@@ -139,48 +34,49 @@
             </div>
         </form>
 
+        @if ($errorMessage)
+            <p class="text-red-600 text-center mt-4">{{ $errorMessage }}</p>
+        @endif
+
         @if ($images->isEmpty() && !$fullscreenImage)
-            <p id="no-images" class="text-center text-gray-600 col-span-2">No images found.</p>
+            <p class="text-center text-gray-600 col-span-2">No images found.</p>
         @endif
 
         @if ($fullscreenImage)
-            <div class="fullscreen-dialog active">
-                <div class="dialog-content">
+            <div class="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center">
+                <div class="relative w-full h-full flex items-center justify-center">
                     <a href="{{ route('gallery.index', ['search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}"
-                        class="close-button material-icons">close</a>
-                    @php
-                        $currentIndex = $images->items()->search(fn($item) => $item->id == $fullscreenImage->id);
-                        $prevImage = $currentIndex > 0 ? $images->items()[$currentIndex - 1] : null;
-                        $nextImage = $currentIndex < count($images->items()) - 1 ? $images->items()[$currentIndex + 1] : null;
-                    @endphp
+                        class="absolute top-4 right-4 text-white text-2xl opacity-70 hover:opacity-100">X</a>
                     @if ($prevImage)
                         <a href="{{ route('gallery.index', ['fullscreen' => $prevImage->id, 'search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}"
-                            class="nav-button left material-icons">chevron_left</a>
+                            class="absolute left-2 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100">&lt;</a>
                     @endif
                     <img src="{{ $fullscreenImage->proxy_url }}" alt="{{ $fullscreenImage->title ?? 'Image' }}"
-                        class="fullscreen-img" onerror="this.closest('.fullscreen-dialog').style.display='none';">
+                        class="max-w-full max-h-screen object-contain select-none"
+                        onerror="this.closest('.fixed').classList.add('hidden')">
                     @if ($nextImage)
                         <a href="{{ route('gallery.index', ['fullscreen' => $nextImage->id, 'search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}"
-                            class="nav-button right material-icons">chevron_right</a>
+                            class="absolute right-2 top-1/2 -translate-y-1/2 text-white text-4xl opacity-70 hover:opacity-100">&gt;</a>
                     @endif
                 </div>
             </div>
         @else
-            <div id="gallery-grid" class="gallery-grid">
-                @foreach ($images as $index => $image)
-                    <div class="card" data-image-id="{{ $image->id }}">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0">
+                @foreach ($images as $image)
+                    <div class="group" data-image-id="{{ $image->id }}">
                         <a href="{{ route('gallery.index', ['fullscreen' => $image->id, 'search' => $search, 'type' => $type, 'per_page' => $perPage, 'page' => $page]) }}">
                             <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}"
-                                class="card-img" onerror="this.closest('.card').classList.add('hidden')">
+                                class="w-full h-48 object-cover block border-none"
+                                onerror="this.closest('.group').classList.add('hidden')">
                         </a>
                     </div>
                 @endforeach
             </div>
 
             @if ($images->hasMorePages())
-                <div id="view-more" class="text-center mt-6">
+                <div class="text-center mt-6">
                     <a href="{{ route('gallery.index', ['page' => $page + 1, 'search' => $search, 'type' => $type, 'per_page' => $perPage]) }}"
-                        class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">View More</a>
+                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">View More</a>
                 </div>
             @endif
         @endif
