@@ -151,9 +151,6 @@
                                     <source src="{{ $video->proxied_url }}" type="video/mp4">
                                 </video>
                             @endif
-                            {{-- <div class="card-body p-2">
-                                <h6 class="card-title mb-0 text-truncate">{{ $video->title ?? 'Untitled' }}</h6>
-                            </div> --}}
                         </div>
                     </div>
                 @endforeach

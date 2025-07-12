@@ -32,6 +32,7 @@
                     placeholder="Per Page" min="1" max="100">
                 <button type="submit" class="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600">Apply</button>
             </div>
+             <a href="/videos" class="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600">Videos</a>
         </form>
 
         <p id="error-message" class="text-red-600 text-center mt-4 hidden"></p>
