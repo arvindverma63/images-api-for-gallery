@@ -163,7 +163,7 @@
         <div id="spinner" class="spinner"></div>
         <div id="gallery-grid" class="gallery-grid">
             @forelse ($images as $index => $image)
-                <div class="card">
+                <div class="card" data-image-url="{{ $image->proxy_url }}">
                     <a href="javascript:void(0)" class="image-link" data-fullscreen-id="fullscreen-{{ $index }}">
                         <img src="{{ $image->proxy_url }}" alt="{{ $image->title ?? 'Image' }}" class="card-img" onerror="this.closest('.card').classList.add('hidden')">
                     </a>
@@ -197,6 +197,11 @@
     </div>
 
     <script>
+        // Track loaded image URLs to prevent duplicates
+        const loadedImageUrls = new Set(
+            Array.from(document.querySelectorAll('.card')).map(card => card.getAttribute('data-image-url')).filter(url => url)
+        );
+
         // Show/hide spinner
         function toggleSpinner(show) {
             const spinner = document.getElementById('spinner');
@@ -263,14 +268,30 @@
                 // Clear grid if not appending
                 if (!append) {
                     galleryGrid.innerHTML = '';
+                    loadedImageUrls.clear();
                 }
 
-                // Render images
+                // Render images, avoiding duplicates
                 if (data.images && data.images.length > 0) {
+                    // Track the highest index already in the DOM
+                    const existingIndices = Array.from(document.querySelectorAll('.fullscreen-dialog')).map(dialog =>
+                        parseInt(dialog.getAttribute('data-index')) || 0
+                    );
+                    const maxIndex = existingIndices.length > 0 ? Math.max(...existingIndices) : -1;
+
                     data.images.forEach((image, index) => {
-                        const globalIndex = append ? (parseInt(data.startIndex) || 0) + index : index;
+                        // Skip if image URL is already loaded
+                        if (loadedImageUrls.has(image.proxy_url)) {
+                            return;
+                        }
+
+                        // Calculate global index for new images
+                        const globalIndex = append ? maxIndex + 1 + index : index;
+                        loadedImageUrls.add(image.proxy_url);
+
                         const card = document.createElement('div');
                         card.className = 'card';
+                        card.setAttribute('data-image-url', image.proxy_url);
                         card.innerHTML = `
                             <a href="javascript:void(0)" class="image-link" data-fullscreen-id="fullscreen-${globalIndex}">
                                 <img src="${image.proxy_url}" alt="${image.title || 'Image'}" class="card-img" onerror="this.closest('.card').classList.add('hidden')">
@@ -300,8 +321,10 @@
                         viewMore.innerHTML = '';
                     }
                 } else {
-                    galleryGrid.innerHTML = '<p id="no-images" class="text-center text-gray-600 col-span-2">No images found.</p>';
-                    viewMore.innerHTML = '';
+                    if (!append) {
+                        galleryGrid.innerHTML = '<p id="no-images" class="text-center text-gray-600 col-span-2">No images found.</p>';
+                        viewMore.innerHTML = '';
+                    }
                 }
 
                 // Restore scroll position
