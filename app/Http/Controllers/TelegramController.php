@@ -7,6 +7,7 @@ use App\Models\ImageLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class TelegramController extends Controller
 {
@@ -24,33 +25,14 @@ class TelegramController extends Controller
     {
         $data = $request->all();
 
-        // Only handle /start command
         if (!isset($data['message']['text']) || $data['message']['text'] !== '/start') {
             return response()->json(['ok' => true]);
         }
 
         $chatId = $data['message']['chat']['id'];
-
-        // Load all images from JSON
         $images = $this->loadImagesFromJson();
 
-        // Get already sent images for this chat ID
-        $sentImages = ImageLog::where('telegram_user_id', $chatId)->pluck('image')->toArray();
-
-        // Filter out already sent images
-        $newImages = collect($images)->filter(function ($item) use ($sentImages) {
-            return !in_array($item['image'], $sentImages);
-        })->values();
-
-        if ($newImages->isEmpty()) {
-            Http::get("https://api.telegram.org/bot{$this->botToken}/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => '✅ All images already sent.',
-            ]);
-            return response()->json(['message' => 'No new images to send.']);
-        }
-
-        foreach (array_chunk($newImages->toArray(), 10) as $batch) {
+        foreach (array_chunk($images, 10) as $batch) {
             foreach ($batch as $item) {
                 $url = $item['image'];
                 $caption = $item['title'] ?? '';
@@ -59,28 +41,25 @@ class TelegramController extends Controller
                 $endpoint = $ext === 'gif' ? 'sendAnimation' : 'sendPhoto';
                 $mediaType = $ext === 'gif' ? 'animation' : 'photo';
 
-                $response = Http::get("https://api.telegram.org/bot{$this->botToken}/{$endpoint}", [
+                $response = Http::post("https://api.telegram.org/bot{$this->botToken}/{$endpoint}", [
                     'chat_id' => $chatId,
                     $mediaType => $url,
                     'caption' => $caption,
                 ]);
 
-                // Only log if Telegram accepted the image
-                if ($response->json('ok')) {
-                    ImageLog::create([
-                        'telegram_user_id' => $chatId,
-                        'image' => $url,
-                    ]);
-                }
+                // Debug response
+                Log::info('Telegram response:', $response->json());
 
-                usleep(300000); // 0.3 sec delay
+                // Optional: Short delay
+                usleep(300000);
             }
 
-            sleep(2); // Delay between batches
+            sleep(2);
         }
 
-        return response()->json(['message' => 'New images sent.']);
+        return response()->json(['status' => 'sent']);
     }
+
 
     // 📁 2. Create initial JSON from DB
     public function createImagesJson()
