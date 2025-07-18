@@ -45,3 +45,6 @@ Route::get('/gallery', [GalleryController::class, 'index'])
     ->name('gallery.index');
 
 Route::get('/videos',[VideoController::class,'index'])->name('videos.index');
+use App\Http\Controllers\TelegramController;
+
+Route::get('/send-images-to-telegram', [TelegramController::class, 'sendImagesBatch']);
