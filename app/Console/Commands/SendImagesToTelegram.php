@@ -33,13 +33,12 @@ class SendImagesToTelegram extends Command
         $bar = $this->output->createProgressBar($total);
         $bar->start();
 
-        Image::orderBy('id','desc')->chunk(100, function ($images) use ($bar) {
+        Image::orderBy('id', 'desc')->chunk(100, function ($images) use ($bar) {
             $media = [];
 
             foreach ($images as $image) {
                 $url = $image->image;
                 $caption = $image->title ?? '';
-
                 $extension = strtolower(pathinfo($url, PATHINFO_EXTENSION));
 
                 try {
@@ -49,43 +48,50 @@ class SendImagesToTelegram extends Command
                             'animation' => $url,
                             'caption' => $caption,
                         ]);
+                        $bar->advance();
                     } elseif ($extension === 'webp') {
                         Http::post("https://api.telegram.org/bot{$this->botToken}/sendPhoto", [
                             'chat_id' => $this->chatId,
                             'photo' => $url,
                             'caption' => $caption,
                         ]);
+                        $bar->advance();
                     } elseif (filter_var($url, FILTER_VALIDATE_URL)) {
                         $media[] = [
                             'type' => 'photo',
                             'media' => $url,
                             'caption' => $caption,
                         ];
+
+                        // Advance here only when we successfully send batch later
                     }
                 } catch (\Exception $e) {
                     Log::error("Telegram API failed: {$e->getMessage()} for image: {$url}");
+                    $bar->advance(); // Still count failed one to avoid hanging
                 }
 
-                $bar->advance();
-
-                // Send media group in smaller batches of 10 (Telegram's limit per media group)
                 if (count($media) >= 10) {
                     $this->sendMediaGroup($media);
-                    $media = []; // Reset media array
+                    $bar->advance(count($media)); // Advance bar properly
+                    $media = []; // Reset
+                    sleep(2); // Slight pause for Telegram API
                 }
             }
 
-            // Send any remaining media
+            // Send remaining images
             if (!empty($media)) {
                 $this->sendMediaGroup($media);
+                $bar->advance(count($media));
             }
 
             $this->info("\nBatch completed. Waiting 30 seconds...");
+            sleep(30);
         });
 
         $bar->finish();
         $this->info("\n✅ All images sent to Telegram!");
     }
+
 
     private function sendMediaGroup(array $media)
     {
