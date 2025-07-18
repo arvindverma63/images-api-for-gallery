@@ -25,39 +25,58 @@ class TelegramController extends Controller
     {
         $data = $request->all();
 
-        if (!isset($data['message']['text']) || $data['message']['text'] !== '/start') {
-            return response()->json(['ok' => true]);
-        }
+        if (isset($data['message']['text']) && $data['message']['text'] === '/start') {
+            $chatId = $data['message']['chat']['id'];
+            $images = $this->loadImagesFromJson();
 
-        $chatId = $data['message']['chat']['id'];
-        $images = $this->loadImagesFromJson();
+            foreach (array_chunk($images, 10) as $batch) {
+                $proxy = $this->getRandomProxy(); // 🔁 Get a new proxy per batch
 
-        foreach (array_chunk($images, 10) as $batch) {
-            foreach ($batch as $item) {
-                $url = $item['image'];
-                $caption = $item['title'] ?? '';
-                $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+                $options = [];
+                if ($proxy) {
+                    $options['proxy'] = "http://{$proxy}";
+                }
 
-                $endpoint = $ext === 'gif' ? 'sendAnimation' : 'sendPhoto';
-                $mediaType = $ext === 'gif' ? 'animation' : 'photo';
+                foreach ($batch as $item) {
+                    $url = $item['image'];
+                    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+                    $caption = $item['title'] ?? '';
 
-                $response = Http::post("https://api.telegram.org/bot{$this->botToken}/{$endpoint}", [
-                    'chat_id' => $chatId,
-                    $mediaType => $url,
-                    'caption' => $caption,
-                ]);
+                    $endpoint = ($ext === 'gif') ? 'sendAnimation' : 'sendPhoto';
+                    $mediaKey = ($ext === 'gif') ? 'animation' : 'photo';
 
-                // Debug response
-                Log::info('Telegram response:', $response->json());
+                    $response = Http::withOptions($options)->post("https://api.telegram.org/bot{$this->botToken}/{$endpoint}", [
+                        'chat_id' => $chatId,
+                        $mediaKey => $url,
+                        'caption' => $caption,
+                    ]);
 
-                // Optional: Short delay
-                usleep(300000);
+                    Log::info("Proxy used: {$proxy}");
+                    Log::info("Telegram response: " . json_encode($response->json()));
+
+                    usleep(300000); // 0.3 sec between images
+                }
+
+                sleep(2); // Pause 2 sec after batch
             }
-
-            sleep(2);
         }
 
-        return response()->json(['status' => 'sent']);
+        return response()->json(['ok' => true]);
+    }
+
+    protected function getRandomProxy()
+    {
+        $path = public_path('proxy.txt');
+
+        if (!file_exists($path))
+            return null;
+
+        $proxies = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        if (empty($proxies))
+            return null;
+
+        return trim($proxies[array_rand($proxies)]);
     }
 
 
